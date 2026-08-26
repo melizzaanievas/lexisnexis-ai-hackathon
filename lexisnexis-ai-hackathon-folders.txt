@@ -1,0 +1,12 @@
+├── README.md                           # Hackathon summary, pivot story, dashboard concept
+├── docs/
+│   ├── Checkpoint_1_Submission.md      # Initial concept (Document Drafting)
+│   ├── Checkpoint_2_Submission.md      # Week 2 pivot & findings (Educational Engine)
+│   └── Final_Report.md                 # Complete 6-week hackathon analysis[cite: 1]
+├── testing_data/
+│   ├── Protege_HK_Employment_Outputs.md# Raw generated results from Protege
+│   └── Prompt_Templates.md             # Standardized system prompts used for testing
+├── comparative_analysis/
+│   └── Platform_Comparison_Matrix.csv  # Protege vs Harvey vs Gemini Enterprise data[cite: 1]
+└── dashboard_mockup/
+    └── app.py                          # Streamlit prototype script for educational dashboard
