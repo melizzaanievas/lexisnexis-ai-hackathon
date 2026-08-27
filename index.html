@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Protégé: Scenario-to-Authority Educational Engine</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f4f6f8; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #003366; margin-bottom: 5px; }
+        .subtitle { color: #666; font-size: 0.9em; margin-bottom: 25px; }
+        .controls { background: #eef2f5; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 20px; }
+        select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
+        .card { background: #eef6fc; border-left: 5px solid #0055a5; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+        .grid { display: flex; gap: 15px; margin-bottom: 20px; }
+        .verdict-box { flex: 1; padding: 15px; border-radius: 6px; }
+        .gross { background-color: #fdf2f2; border: 1px solid #f8b4b4; color: #9b1c1c; }
+        .minor { background-color: #fef8ec; border: 1px solid #fce4b6; color: #8a5340; }
+        .exercise { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; color: #166534; }
+        .authorities { background: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚖️ Protégé: Scenario-to-Authority Educational Engine</h1>
+    <div class="subtitle">Powered by LexisNexis Protégé | Jurisdiction: Hong Kong SAR</div>
+
+    <div class="controls">
+        <div>
+            <label><b>Legal Topic:</b></label><br>
+            <select id="topicSelect" onchange="renderDashboard()">
+                <option value="s9">Summary Dismissal (Cap. 57 s.9)</option>
+            </select>
+        </div>
+        <div>
+            <label><b>Target Audience:</b></label><br>
+            <select id="audienceSelect" onchange="renderDashboard()">
+                <option value="clinic">University Legal Clinic</option>
+                <option value="client">Non-Lawyer Client Takeaway</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="dashboardContent"></div>
+
+    <h3>📜 LexisNexis Primary Legal Grounding</h3>
+    <div class="authorities">
+Statute: (HK) Chapter 57 EMPLOYMENT ORDINANCE s 9 (Summary Dismissal)
+Precedent: TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366
+Supporting Authorities:
+  - Wan Hung Shu t/a Paris Wan's Co v Li Chun Yam [1993] 2 HKC 714
+  - Allidem v Kwong Si Lin [2006] 1 HKC 252
+  - Wong Kar Gee Mimi v Applied Development Holdings Ltd [2016] 1 HKC 350
+    </div>
+</div>
+
+<script>
+function renderDashboard() {
+    const audience = document.getElementById('audienceSelect').value;
+    const content = document.getElementById('dashboardContent');
+
+    if (audience === 'clinic') {
+        content.innerHTML = `
+            <div class="card">
+                <h3>🎴 The Scenario Card: The Cloud Backup Dilemma</h3>
+                <p>Alex, a mid-level employee at a Hong Kong financial firm, backed up 50GB of personal family photos to the firm’s secure enterprise cloud storage without prior authorisation. The company discovered this activity and immediately terminated Alex without notice or compensation in lieu, claiming gross misconduct. Alex seeks clarification on whether this termination meets Section 9 standards under Cap. 57.</p>
+            </div>
+            <div class="grid">
+                <div class="verdict-box gross">
+                    <h4>⚖️ The Verdict: Gross Misconduct</h4>
+                    <p>Under <i>Tsang Tak Chi v China Wall Ltd</i>, summary dismissal requires repudiation of a fundamental term. Given financial enterprise security rules, a 50GB unauthorized upload may constitute gross misconduct if it poses severe security risks.</p>
+                </div>
+                <div class="verdict-box minor">
+                    <h4>⚖️ The Verdict: Minor Negligence</h4>
+                    <p>As held in <i>Tsang Tak Chi</i>, instant dismissal is akin to 'capital punishment'. If Alex’s upload was unintentional with insignificant harm, it falls under minor negligence—insufficient for summary dismissal.</p>
+                </div>
+            </div>
+            <div class="exercise">
+                <h4>📝 Clinical Exercise (True / False)</h4>
+                <p>1. <b>Q1:</b> Summary dismissal in HK requires gross misconduct that undermines fundamental trust? <b>(TRUE)</b></p>
+                <p>2. <b>Q2:</b> Employers are always justified in firing employees for a single act of negligence? <b>(FALSE)</b></p>
+            </div>
+        `;
+    } else {
+        content.innerHTML = `
+            <div class="card">
+                <h3>📢 Client Takeaway Card</h3>
+                <ul>
+                    <li><b>Instant Firing:</b> Employers can only fire you on the spot without notice pay under Section 9 for severe misconduct (like fraud or deliberate refusal of lawful orders).</li>
+                    <li><b>Errors vs Misconduct:</b> Under <i>Tsang Tak Chi v China Wall Ltd</i>, minor errors or unintentional rule breaches rarely justify immediate dismissal without prior warning.</li>
+                    <li><b>Statutory Rights:</b> Even if summarily dismissed, employees remain entitled to earned unpaid wages and accrued holiday pay.</li>
+                </ul>
+            </div>
+        `;
+    }
+}
+renderDashboard();
+</script>
+
+</body>
+</html>
