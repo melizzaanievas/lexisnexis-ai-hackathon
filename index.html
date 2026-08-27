@@ -2,17 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Protégé: Scenario-to-Authority Educational Engine</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f4f6f8; color: #333; }
         .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { color: #003366; margin-bottom: 5px; }
         .subtitle { color: #666; font-size: 0.9em; margin-bottom: 25px; }
-        .controls { background: #eef2f5; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 20px; }
+        .controls { background: #eef2f5; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
         select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
         .card { background: #eef6fc; border-left: 5px solid #0055a5; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
-        .grid { display: flex; gap: 15px; margin-bottom: 20px; }
-        .verdict-box { flex: 1; padding: 15px; border-radius: 6px; }
+        .grid { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .verdict-box { flex: 1; min-width: 280px; padding: 15px; border-radius: 6px; }
         .gross { background-color: #fdf2f2; border: 1px solid #f8b4b4; color: #9b1c1c; }
         .minor { background-color: #fef8ec; border: 1px solid #fce4b6; color: #8a5340; }
         .exercise { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; color: #166534; }
@@ -27,12 +28,12 @@
 
     <div class="controls">
         <div>
-            <label><b>Legal Topic:</b></label><br>
+            <label><b>Legal Topic & Industry Scenario:</b></label><br>
             <select id="topicSelect" onchange="renderDashboard()">
-    <option value="cloud">Summary Dismissal: Cloud Backup (Finance)</option>
-    <option value="flyers">Summary Dismissal: Printer Misuse (Hospitality)</option>
-    <option value="van">Summary Dismissal: Vehicle Misuse (Logistics)</option>
-</select>
+                <option value="cloud">Summary Dismissal: Cloud Backup (Finance)</option>
+                <option value="flyers">Summary Dismissal: Printer Misuse (Hospitality)</option>
+                <option value="van">Summary Dismissal: Vehicle Misuse (Logistics)</option>
+            </select>
         </div>
         <div>
             <label><b>Target Audience:</b></label><br>
@@ -56,27 +57,34 @@ Supporting Authorities:
     </div>
 </div>
 
+<script>
 const scenarios = {
     cloud: {
         title: "🎴 Scenario A: The Cloud Backup Dilemma (Finance)",
-        story: "Alex, a mid-level employee at a Hong Kong financial firm, backed up 50GB of personal family photos to the firm’s enterprise cloud storage without prior authorisation. The company discovered this activity and immediately terminated Alex without notice, claiming gross misconduct[cite: 3].",
-        gross: "Under Tsang Tak Chi, unauthorized 50GB uploads in sensitive financial environments may constitute gross misconduct if they cause severe security policy breaches or regulatory risks[cite: 3].",
-        minor: "Instant dismissal is an extreme measure ('capital punishment'). If the upload was unintentional with insignificant harm and no prior warnings, it falls under minor negligence[cite: 3].",
-        client: "• Instant firing requires severe misconduct (s.9 Cap. 57).\n• Unintentional mistakes rarely justify immediate firing.\n• Accrued pay must still be paid[cite: 3]."
+        story: "Alex, a mid-level employee at a Hong Kong financial firm, backed up 50GB of personal family photos to the firm’s secure enterprise cloud storage without prior authorisation. The company discovered this activity and immediately terminated Alex without notice or compensation in lieu, claiming gross misconduct.",
+        gross: "Under Tsang Tak Chi v China Wall Ltd, summary dismissal requires repudiation of a fundamental term. Given financial enterprise security rules, a 50GB unauthorized upload may constitute gross misconduct if it poses severe security breaches or regulatory risks.",
+        minor: "As held in Tsang Tak Chi, instant dismissal is akin to 'capital punishment'. If Alex’s upload was unintentional with insignificant harm and no prior warnings, it falls under minor negligence—insufficient for summary dismissal.",
+        client: "• Instant Firing: Only allowed for gross misconduct (s.9 Cap. 57).\n• Errors vs Misconduct: Unintentional mistakes rarely justify immediate dismissal without prior warning.\n• Accrued Pay: You keep your earned unpaid wages regardless.",
+        q1: "Q1: Summary dismissal in HK requires gross misconduct that undermines fundamental trust? (TRUE)",
+        q2: "Q2: Employers are always justified in firing employees for a single act of negligence? (FALSE)"
     },
     flyers: {
         title: "🎴 Scenario B: Corporate Printer Usage (Hospitality)",
-        story: "A senior manager at a high-end restaurant prints 500 personal event flyers using the office printer without permission. The financial cost is minor, but it breaches company policy restricting personal usage[cite: 3].",
-        gross: "As a senior manager, misusing resources undermines corporate integrity and violates fundamental duties of fidelity and trust[cite: 3].",
-        minor: "If the act is isolated, has minimal financial impact, and lacks a clear prohibition policy, it remains a minor error of judgment[cite: 3].",
-        client: "• Misusing office resources can be gross misconduct if it breaches trust, especially for managers[cite: 3]."
+        story: "A senior manager at a high-end restaurant prints 500 personal event flyers using the office printer without permission. The financial cost is minor, but it breaches company policy restricting personal usage of office resources.",
+        gross: "As a senior manager, misusing resources directly undermines corporate integrity and violates essential duties of fidelity and trust, which can justify summary dismissal under Section 9.",
+        minor: "If the act is isolated, has minimal financial impact, and lacks a clear prohibition policy, it may not rise to gross misconduct. Disciplinary measures short of dismissal are appropriate.",
+        client: "• Leadership Duty: Misusing office resources can be gross misconduct if it breaches trust, especially for managers.\n• Minor Impact: Isolated low-cost errors rarely justify immediate firing without warnings.",
+        q1: "Q1: Senior leadership roles carry a higher duty of fidelity regarding resource misuse? (TRUE)",
+        q2: "Q2: Printing personal documents always automatically justifies instant dismissal? (FALSE)"
     },
     van: {
         title: "🎴 Scenario C: Off-Duty Vehicle Usage (Logistics)",
-        story: "A delivery driver uses the company van to move personal furniture over the weekend without informing the employer. While no deliveries were missed, vehicle usage policies were breached[cite: 3].",
-        gross: "Deliberately ignoring clear vehicle usage prohibitions in the employment agreement signals fundamental disregard for trust[cite: 3].",
-        minor: "If the driver misunderstood policy, caused no damage, and had no prior warnings, disciplinary action short of dismissal is appropriate[cite: 3].",
-        client: "• Off-duty policy breaches can result in dismissal if they damage employer trust[cite: 3]."
+        story: "A delivery driver uses the company van to move personal furniture over the weekend without informing the employer. While no scheduled deliveries were disrupted, vehicle usage policies outlined in the employment contract were breached.",
+        gross: "Deliberately ignoring clear vehicle usage prohibitions in the contract signals a fundamental disregard for terms of employment, undermining mutual trust.",
+        minor: "If the driver misunderstood the policy, caused no damage, and had no prior warnings, the act constitutes a minor error of judgment where summary dismissal is excessive.",
+        client: "• Off-duty Policy: Breaches committed outside work hours can still result in dismissal if trust is broken.\n• Property Misuse: Always clarify company vehicle policies before personal off-duty use.",
+        q1: "Q1: Off-duty misconduct can justify summary dismissal if it breaks contractual trust? (TRUE)",
+        q2: "Q2: Policy misunderstandings with zero damage automatically warrant instant firing? (FALSE)"
     }
 };
 
@@ -102,6 +110,11 @@ function renderDashboard() {
                     <p>${data.minor}</p>
                 </div>
             </div>
+            <div class="exercise">
+                <h4>📝 Clinical Exercise (True / False)</h4>
+                <p>1. <b>${data.q1}</b></p>
+                <p>2. <b>${data.q2}</b></p>
+            </div>
         `;
     } else {
         content.innerHTML = `
@@ -112,6 +125,10 @@ function renderDashboard() {
         `;
     }
 }
+
+// Initial render
+renderDashboard();
+</script>
 
 </body>
 </html>
