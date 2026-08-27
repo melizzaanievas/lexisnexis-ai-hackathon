@@ -29,8 +29,10 @@
         <div>
             <label><b>Legal Topic:</b></label><br>
             <select id="topicSelect" onchange="renderDashboard()">
-                <option value="s9">Summary Dismissal (Cap. 57 s.9)</option>
-            </select>
+    <option value="cloud">Summary Dismissal: Cloud Backup (Finance)</option>
+    <option value="flyers">Summary Dismissal: Printer Misuse (Hospitality)</option>
+    <option value="van">Summary Dismissal: Vehicle Misuse (Logistics)</option>
+</select>
         </div>
         <div>
             <label><b>Target Audience:</b></label><br>
@@ -54,48 +56,62 @@ Supporting Authorities:
     </div>
 </div>
 
-<script>
+const scenarios = {
+    cloud: {
+        title: "🎴 Scenario A: The Cloud Backup Dilemma (Finance)",
+        story: "Alex, a mid-level employee at a Hong Kong financial firm, backed up 50GB of personal family photos to the firm’s enterprise cloud storage without prior authorisation. The company discovered this activity and immediately terminated Alex without notice, claiming gross misconduct[cite: 3].",
+        gross: "Under Tsang Tak Chi, unauthorized 50GB uploads in sensitive financial environments may constitute gross misconduct if they cause severe security policy breaches or regulatory risks[cite: 3].",
+        minor: "Instant dismissal is an extreme measure ('capital punishment'). If the upload was unintentional with insignificant harm and no prior warnings, it falls under minor negligence[cite: 3].",
+        client: "• Instant firing requires severe misconduct (s.9 Cap. 57).\n• Unintentional mistakes rarely justify immediate firing.\n• Accrued pay must still be paid[cite: 3]."
+    },
+    flyers: {
+        title: "🎴 Scenario B: Corporate Printer Usage (Hospitality)",
+        story: "A senior manager at a high-end restaurant prints 500 personal event flyers using the office printer without permission. The financial cost is minor, but it breaches company policy restricting personal usage[cite: 3].",
+        gross: "As a senior manager, misusing resources undermines corporate integrity and violates fundamental duties of fidelity and trust[cite: 3].",
+        minor: "If the act is isolated, has minimal financial impact, and lacks a clear prohibition policy, it remains a minor error of judgment[cite: 3].",
+        client: "• Misusing office resources can be gross misconduct if it breaches trust, especially for managers[cite: 3]."
+    },
+    van: {
+        title: "🎴 Scenario C: Off-Duty Vehicle Usage (Logistics)",
+        story: "A delivery driver uses the company van to move personal furniture over the weekend without informing the employer. While no deliveries were missed, vehicle usage policies were breached[cite: 3].",
+        gross: "Deliberately ignoring clear vehicle usage prohibitions in the employment agreement signals fundamental disregard for trust[cite: 3].",
+        minor: "If the driver misunderstood policy, caused no damage, and had no prior warnings, disciplinary action short of dismissal is appropriate[cite: 3].",
+        client: "• Off-duty policy breaches can result in dismissal if they damage employer trust[cite: 3]."
+    }
+};
+
 function renderDashboard() {
+    const topic = document.getElementById('topicSelect').value;
     const audience = document.getElementById('audienceSelect').value;
     const content = document.getElementById('dashboardContent');
+    const data = scenarios[topic] || scenarios.cloud;
 
     if (audience === 'clinic') {
         content.innerHTML = `
             <div class="card">
-                <h3>🎴 The Scenario Card: The Cloud Backup Dilemma</h3>
-                <p>Alex, a mid-level employee at a Hong Kong financial firm, backed up 50GB of personal family photos to the firm’s secure enterprise cloud storage without prior authorisation. The company discovered this activity and immediately terminated Alex without notice or compensation in lieu, claiming gross misconduct. Alex seeks clarification on whether this termination meets Section 9 standards under Cap. 57.</p>
+                <h3>${data.title}</h3>
+                <p>${data.story}</p>
             </div>
             <div class="grid">
                 <div class="verdict-box gross">
-                    <h4>⚖️ The Verdict: Gross Misconduct</h4>
-                    <p>Under <i>Tsang Tak Chi v China Wall Ltd</i>, summary dismissal requires repudiation of a fundamental term. Given financial enterprise security rules, a 50GB unauthorized upload may constitute gross misconduct if it poses severe security risks.</p>
+                    <h4>⚖️ Verdict: Gross Misconduct</h4>
+                    <p>${data.gross}</p>
                 </div>
                 <div class="verdict-box minor">
-                    <h4>⚖️ The Verdict: Minor Negligence</h4>
-                    <p>As held in <i>Tsang Tak Chi</i>, instant dismissal is akin to 'capital punishment'. If Alex’s upload was unintentional with insignificant harm, it falls under minor negligence—insufficient for summary dismissal.</p>
+                    <h4>⚖️ Verdict: Minor Negligence</h4>
+                    <p>${data.minor}</p>
                 </div>
-            </div>
-            <div class="exercise">
-                <h4>📝 Clinical Exercise (True / False)</h4>
-                <p>1. <b>Q1:</b> Summary dismissal in HK requires gross misconduct that undermines fundamental trust? <b>(TRUE)</b></p>
-                <p>2. <b>Q2:</b> Employers are always justified in firing employees for a single act of negligence? <b>(FALSE)</b></p>
             </div>
         `;
     } else {
         content.innerHTML = `
             <div class="card">
                 <h3>📢 Client Takeaway Card</h3>
-                <ul>
-                    <li><b>Instant Firing:</b> Employers can only fire you on the spot without notice pay under Section 9 for severe misconduct (like fraud or deliberate refusal of lawful orders).</li>
-                    <li><b>Errors vs Misconduct:</b> Under <i>Tsang Tak Chi v China Wall Ltd</i>, minor errors or unintentional rule breaches rarely justify immediate dismissal without prior warning.</li>
-                    <li><b>Statutory Rights:</b> Even if summarily dismissed, employees remain entitled to earned unpaid wages and accrued holiday pay.</li>
-                </ul>
+                <p>${data.client.replace(/\n/g, '<br>')}</p>
             </div>
         `;
     }
 }
-renderDashboard();
-</script>
 
 </body>
 </html>
