@@ -21,7 +21,7 @@ This framework uses a two-stage conversational workflow in the **Ask** module of
 ### Prompt Template:
 > "Take your legal analysis above and reformat it for a university legal clinic display board. Generate:
 > 
-> 1. **The Scenario Card:** A 3-sentence plain-English story describing a fictional worker named [NAME] who [BRIEF SUMMARY OF ACT] and got fired.
+> 1. **The Scenario Card:** A 3-sentence plain-English story describing a fictional worker named [NAME] who [BRIEF SUMMARY OF ACT] and resulted in [CONSEQUENCE].
 > 2. **The Verdict:** A 2-bullet summary explaining why the facts might constitute '[HIGH-THRESHOLD VIOLATION, e.g., Gross Misconduct]' vs. '[LOW-THRESHOLD DEFENSE, e.g., Minor Negligence]' under [PRIMARY RETRIEVED PRECEDENT].
 > 3. **Clinical Exercise:** 2 quick True/False questions testing key statutory principles for law students."
 
