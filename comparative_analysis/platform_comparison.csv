@@ -1,0 +1,8 @@
+Feature Metric,Protégé (LexisNexis) [Tested],Harvey AI (Theoretical Benchmark),Gemini Enterprise (General AI Benchmark)
+Primary Knowledge Source,Direct LexisNexis HK CaseBase & Cap. 57 Databases,Custom Legal Fine-Tuned LLMs & Azure Vaults,Google Gemini Foundation Models
+Citation Reliability,High (Direct statutory/case links via Shepard's & Lexis),High (Internal vault document extraction & inline citations),Medium (Requires external web retrieval or RAG integration)
+Educational Scenario Adaptability,High (Converts legal precedents into plain-English cards),Medium (Tailored for corporate drafting & M&A due diligence),High (Flexible natural language formatting & translation)
+Data Privacy Security Model,Private Vaults (Anonymized public case testing recommended),Enterprise SOC2/ISO isolated private vaults,Workspace IAM enterprise security & privacy guardrails
+Target Audience Focus,Legal educators & practitioners converting complex law for laymen,AmLaw 100 law firms & enterprise corporate legal teams,General business workflows & multi-purpose enterprise automation
+Native Custom Formatting Support,Low (Drafting tool blocks custom clinical card templates),High (Customizable workflow templates for M&A/Contracts),High (Custom System Prompts & Markdown output flexibility)
+Conversational Workaround Required,Yes (2-Stage Ask module scaffolding required for custom layouts),No (Native template customization supported),No (Direct prompt execution supported)
