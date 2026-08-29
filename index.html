@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Protégé: Scenario-to-Authority Educational Engine</title>
 
-<!-- PptxGenJS Library for Client-Side Editable PPTX / Google Slides Generation -->
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
 <style>
@@ -54,7 +53,6 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <h1>⚖️ Protégé: Scenario-to-Authority Educational Engine</h1>
 <div class="subtitle">Powered by LexisNexis Protégé | Jurisdiction: Hong Kong SAR & Universal Legal Frameworks</div>
 
-<!-- Live Ingestion Bridge -->
 <div class="bridge-box">
 <h3>📥 Protégé Word / PDF Export Live Ingestion Bridge</h3>
 <p style="font-size: 0.9em; color: #444;">Since Protégé exports strictly to Word (.docx) and PDF formats, paste raw text directly from your Protégé export below to convert it into responsive web display cards:</p>
@@ -99,13 +97,11 @@ Cross-Domain Anchors Verified:
  - Sale of Goods Ordinance (Cap. 26) Section 12(1)
 </div>
 
-<!-- Legal Terms & Conditions Disclaimer -->
 <div class="disclaimer-box">
 <div class="disclaimer-title">⚠️ Terms & Conditions & AI Legal Disclaimer</div>
 This dashboard is an educational research tool powered by LexisNexis Protégé and generative AI models. Outputs do not constitute formal legal advice. Lawyers, legal practitioners, and users must independently verify all statutory provisions, case law citations, and legal analyses prior to professional or judicial reliance. The developers and providers disclaim all legal responsibility for actions taken based on generated content.
 </div>
 
-<!-- Footer with Product Link & Author Credits -->
 <div class="footer">
 🔍 Explore <b><a href="https://www.lexisnexis.com/en-hk/products-and-services/online-solution/lexis-plus-protege?gad_source=1&gad_campaignid=24133535899&gbraid=0AAAAA-ENcK1zAYkv8jZgpWtyFAuZPfdAD&gclid=Cj0KCQjwhsrUBhDxARIsAN3AQSfa8iyHEPhnRVxxOIGQ_CfP7pbQU4_BJOARwQS8g3f0X-pm95ZTVf8aAhx0EALw_wcB" target="_blank">LexisNexis Protégé</a></b> for enterprise legal research.<br>
 🚀 Developed by <b>Melizza Anievas</b> for the <b>LexisNexis AI Hackathon 2026</b>.<br>
@@ -222,8 +218,8 @@ const data = scenarios[topic] || scenarios.cloud;
 
 const webAppUrl = "https://script.google.com/macros/s/AKfycbwKg-6XCI4U02Vhgu6QYKzbrxZUHnmfJQop_GqGYKo3giV9iUXmxVjCGVPpA6Vd5-vO/exec";
 
-if (!webAppUrl || webAppUrl === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") {
-alert("Please replace 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' in index.html with your actual Google Apps Script Web App URL!");
+if (!webAppUrl || webAppUrl.includes("YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE")) {
+alert("Please configure a valid Google Apps Script Web App URL!");
 return;
 }
 
@@ -237,7 +233,6 @@ client: data.client
 
 alert("Generating your editable Google Slides presentation... Please wait a few seconds!");
 window.open(`${webAppUrl}?${params.toString()}`, "_blank");
-}
 }
 
 function parseProtegeInput() {
