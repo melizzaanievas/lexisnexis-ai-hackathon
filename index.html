@@ -218,13 +218,21 @@ content.innerHTML = `
 }
 }
 
-// Clean helper function to strip raw legal noise, unparsed section headers, and repeated phrases
+// Clean helper function to strip raw legal noise, prompt parameters, and redundant headers
 function cleanCardText(text) {
   if (!text) return "";
   let cleaned = text;
   // Strip quotes
   cleaned = cleaned.replace(/"[^"]*"/g, '');
-  // Strip structural headers and parenthetical tags
+  // Strip prompt labels and AI headers
+  cleaned = cleaned.replace(/AI Assistant:?/gi, '');
+  cleaned = cleaned.replace(/\d\.\s*(The\s*)?Scenario\s*Card[^\n]*/gi, '');
+  cleaned = cleaned.replace(/Industry:[^\n]*/gi, '');
+  cleaned = cleaned.replace(/Role:[^\n]*/gi, '');
+  cleaned = cleaned.replace(/Worker\/Party:[^\n]*/gi, '');
+  cleaned = cleaned.replace(/Incident:[^\n]*/gi, '');
+  cleaned = cleaned.replace(/Primary Statute:[^\n]*/gi, '');
+  cleaned = cleaned.replace(/Allegation:[^\n]*/gi, '');
   cleaned = cleaned.replace(/2\.\s*The\s*Verdict[^\n]*/gi, '');
   cleaned = cleaned.replace(/vs\s*Low-Threshold\s*Defen[sc]e\)?/gi, '');
   cleaned = cleaned.replace(/High-Threshold\s*Violation:?\*?/gi, '');
@@ -257,7 +265,7 @@ if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
 
-// Robust default baseline state
+// Baseline Fallbacks
 let scenarioText = "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to a personal, unapproved cloud drive to finish work over the weekend.";
 let grossText = "Jordan's action constitutes a serious breach of DPP4 (failure to safeguard personal data against unauthorized access, loss, or transfer) and DPP3 (use of data for personal convenience without patient consent). The transfer of unencrypted sensitive health data to an unapproved external platform exposes patients and the clinic to material security risks.";
 let minorText = "Jordan may argue that the data transfer was an inadvertent technical oversight or work-from-home administrative convenience rather than willful misconduct or dishonesty. However, because the act involves a significant departure from established privacy policies, this defense is unlikely to succeed where stringent controls were provided.";
@@ -272,17 +280,28 @@ if (sec1Match) {
   if (cleaned.length > 20) scenarioText = cleaned;
 }
 
-// Anchor-Based Extraction for Section 2 (High Risk Verdict)
-let grossAnchorStart = rawText.search(/Jordan's action constitutes/i);
-let minorAnchorStart = rawText.search(/Jordan may argue/i);
+// Anchor-Based Extraction for High Risk Verdict
+let grossAnchorStart = rawText.search(/Jordan's action constitutes|High-Threshold Violation/i);
 
-if (grossAnchorStart !== -1 && minorAnchorStart !== -1 && minorAnchorStart > grossAnchorStart) {
-  let rawGross = rawText.substring(grossAnchorStart, minorAnchorStart);
+// Multi-Anchor Search for Minor Error Verdict
+let minorSearchTerms = [/Jordan may argue/i, /Low-Threshold Defence/i, /Low-Threshold/i, /inadvertent technical oversight/i];
+let minorAnchorStart = -1;
+for (let regex of minorSearchTerms) {
+  let idx = rawText.search(regex);
+  if (idx !== -1 && (grossAnchorStart === -1 || idx > grossAnchorStart)) {
+    minorAnchorStart = idx;
+    break;
+  }
+}
+
+if (grossAnchorStart !== -1) {
+  let endIdx = minorAnchorStart !== -1 ? minorAnchorStart : rawText.length;
+  let rawGross = rawText.substring(grossAnchorStart, endIdx);
   let cleanedGross = cleanCardText(rawGross);
   if (cleanedGross.length > 30) grossText = cleanedGross;
 }
 
-// Anchor-Based Extraction for Section 2 (Minor Error Verdict)
+// Extract Minor Error Verdict
 let exerciseAnchorStart = rawText.search(/Clinical Exercise|✔/i);
 if (minorAnchorStart !== -1) {
   let endIdx = exerciseAnchorStart !== -1 ? exerciseAnchorStart : rawText.length;
