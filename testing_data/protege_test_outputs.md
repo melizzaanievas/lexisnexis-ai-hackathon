@@ -135,6 +135,23 @@ This log documents the empirical test runs executed on LexisNexis Protégé duri
 1. **Statutory Line Extraction:** Accurately quoted Schedule 1, Data Protection Principle 4(1) (*"all practicable steps shall be taken to ensure that personal data... are protected against unauthorized or accidental access"*).
 2. **Client Accessibility:** Successfully rendered a 3-bullet plain-English takeaway card explaining basic privacy rules, breach risks, and immediate reporting steps for non-lawyers.
 3. **Pedagogical Impact:** Demonstrated that a single Protégé workflow can simultaneously serve university law clinics (technical legal research) and community legal advice centers (layperson public guidance).
+
+---
+
+## 🧪 Test Run 8: Output Format Constraints (Raw HTML / Markdown vs. Word/PDF)
+
+- **Feature Tested:** Direct Raw HTML & Markdown Generation in Protégé
+- **Objective:** Test if Protégé can output web-ready HTML code or raw Markdown files for direct ingestion into web dashboards.
+
+### Empirical Results & Confirmed Platform Limitation:
+1. **HTML & Code Sanitization:** Protégé does NOT generate raw HTML code blocks or downloadable `.md` files.
+2. **Native Export Boundary:** Output is strictly constrained to enterprise legal document formats (**Microsoft Word `.docx`** and **Adobe PDF**) or plain conversational text.
+3. **Visual Impact:** Plain Word/PDF document text lacks the visual engagement, color-coding, and responsive layout needed for university legal clinic display boards.
+
+### 💡 Validated Workaround Architecture: The "Word/PDF to Dashboard Bridge"
+- **Step 1 (Protégé):** Protégé generates the pinpointed legal analysis and 3-bullet client takeaways, which are exported as a Word/PDF document or copied as plain text.
+- **Step 2 (Web Bridge):** A lightweight JavaScript parser on the frontend (`index.html`) ingests the structured text/copy and dynamically maps it to responsive CSS display cards (`.card`, `.gross`, `.minor`, `.client-takeaway`).
+- **Outcome:** Maintains Protégé's statutory precision while rendering an interactive, visually accessible web display on GitHub Pages.
    
 ---
 
