@@ -25,3 +25,8 @@ REQUIRED OUTPUT TEMPLATE:
    - **Threshold Rule:** [A 1-sentence plain-English explanation of the legal boundary under [PRIMARY_STATUTE_OR_LAW]].
    - **Mistakes vs. Breaches:** [A 1-sentence practical distinction between minor errors and severe legal liability under [PRIMARY_PRECEDENT]].
    - **Key Action Item:** [A 1-sentence recommended operational step for stakeholders facing similar situations].
+
+5. **Primary Legal Grounding & Pinpointing:**
+   - **Primary Statutory Anchor:** [Exact Ordinance Chapter, Section, Sub-section, and Clause]
+   - **Leading Precedent Ratio:** [Exact Case Name, Citation, or PCPD Enforcement Guidance Ratio]
+   - **Cross-Domain Anchors Verified:** [Related statutory provisions, e.g., Employment Ordinance Cap. 57 s.9]
