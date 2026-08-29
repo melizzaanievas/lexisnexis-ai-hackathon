@@ -1,66 +1,80 @@
-# ⚖️ Protégé: Scenario-to-Authority Educational Engine
-> **LexisNexis AI Hackathon 2026** | **Jurisdiction:** Hong Kong SAR  
-> **Team:** Prompt to Practice  
-> **Live Demo Dashboard:** [https://melizzaanievas.github.io/lexisnexis-ai-hackathon/](https://melizzaanievas.github.io/lexisnexis-ai-hackathon/)
+# ⚖️ LexisNexis Protégé: Scenario-to-Authority Educational Engine
+
+> **LexisNexis AI Hackathon 2026 Submission**  
+> **Author & Creator:** Melizza Anievas ([GitHub](https://github.com/melizzaanievas) | [LinkedIn](https://www.linkedin.com/in/melizza-anievas/))  
+> **Jurisdiction:** Hong Kong SAR & Universal Statutory/Precedent Frameworks  
+> **Live Demo Dashboard:** [melizzaanievas.github.io/lexisnexis-ai-hackathon](https://melizzaanievas.github.io/lexisnexis-ai-hackathon/)
 
 ---
 
-## 📌 Executive Summary
+## 📌 Project Overview
 
-Translating complex Hong Kong statutory frameworks and case precedents into simple, accessible materials for legal clinics, law students, and non-lawyers is time-consuming. While AI tools can assist, generic LLMs risk legal inaccuracy, and specialized legal drafting tools often fail to output layperson-friendly formats.
-
-The **Scenario-to-Authority Educational Engine** utilizes **LexisNexis Protégé** to transform primary legal authorities into structured educational hypotheticals, plain-English client takeaway cards, and clinical exercises.
+The **Scenario-to-Authority Educational Engine** bridges the gap between high-precision legal database research and plain-English educational assets. Designed for university legal clinics, non-lawyer client advisories, and corporate stakeholder briefings, this project leverages **LexisNexis Protégé** to transform complex statutory frameworks and judicial ratios into structured, interactive display cards and presentation decks.
 
 ---
 
-## 💡 The Problem & Strategy Pivot
+## 🚀 Key Features & Capabilities
 
-### 1. Initial Challenge & Pivot (Week 2–3)
-Our initial concept aimed to use Protégé for automated legal document drafting. However, testing revealed two major bottlenecks:
-* **Legal Reasoning Limitations:** Raw legal drafting faced precision issues in legal reasoning.
-* **Enterprise Data Confidentiality:** Law firms and in-house counsel faced compliance constraints regarding uploading sensitive client information.
-
-### 2. The Educational Solution
-We pivoted to an **Educational & Clinical Scenario Generator**. By relying on **public Hong Kong precedents** (e.g., Hong Kong Court of First Instance judgments) and anonymized factual patterns, we completely resolved data privacy barriers while targeting high-impact educational workflows.
-
----
-
-## 🧪 Empirical Testing & Findings (Protégé)
-
-We tested Protégé against the **Hong Kong Employment Ordinance (Cap. 57 Section 9)** using a real-world scenario: an employee fired summarily for uploading 50GB of personal photos to company cloud storage.
-
-### Key Findings:
-1. **Drafting Feature Limitation:** Protégé’s native **Draft** module strictly enforces standard legal document types (memos, contracts, letters) and rejects custom educational output requests ("Format not yet supported").
-2. **Conversational Scaffolding Workaround:** Switching to a **two-step conversational workflow** in the **Ask** module successfully retrieved exact primary authorities (*Tsang Tak Chi v China Wall Ltd* [1999]) and reformatted the dense legal analysis into clean educational display cards.
+* **Pinpointed Statutory & Precedent Extraction:** Locates and quotes the exact statutory sub-clause (e.g., Cap. 57 s.9(1)(a)(ii), Cap. 486 DPP4(1), Cap. 26 s.12(1)) and judicial ratio (*Tsang Tak Chi v China Wall Ltd*) anchoring a legal dispute.
+* **Dual-Audience Output Engine:** Simultaneously generates technical analysis for law students/practitioners and simplified 3-bullet takeaway cards for non-lawyer clients.
+* **Universal Vault Scaffolding (`universal_clinic_template_framework.txt`):** Stores reusable instructions in a Protégé Vault, bypassing input limits and reducing prompt setup by 70%.
+* **Word/PDF Live Ingestion Bridge:** Resolves enterprise document export constraints by providing a live text ingestion parser on `index.html` that converts copied text into styled display cards.
+* **Multi-Format Presentation Exporter:**
+  * **📊 One-Click Editable Slides (`.pptx`):** Generates 16:9 widescreen presentation decks (via `PptxGenJS`) that open directly in Google Slides or Microsoft PowerPoint.
+  * **✨ Google Apps Script Engine:** Automates slide creation in Google Drive via REST API.
+  * **🖨️ PDF Print Engine:** Clean CSS `@media print` formatting for physical handouts and PDF exports.
+  * **📋 Clipboard Outline:** Instant slide outline generator for rapid lecture notes.
 
 ---
 
-## 📊 Platform Comparison Matrix
+## 🧪 Empirical Test Summary (Test Runs 1 – 8)
 
-Since competitor tools were restricted to preview modes, we conducted a feature-to-claim benchmark comparing Protégé's tested capabilities against industry standards:
+| Test Run | Feature / Focus | Objective & Findings |
+| :--- | :--- | :--- |
+| **Run 1** | Native Draft Module vs. Ask | Confirmed Draft module enforces standard legal memos; Ask tab successfully retrieved Cap. 57 s.9 cases (*Tsang Tak Chi*, *Wan Hung Shu*). |
+| **Run 2** | Conversational Scaffolding | Proved two-stage prompts successfully convert raw memo outputs into 3-card plain-English clinical display boards. |
+| **Run 3** | Multi-Industry Scaling | Tested parallel scenario generation across Finance (Cloud), Hospitality (Printer), and Logistics (Van Usage). |
+| **Run 4** | "Generate Template Responses" Skill | Verified that native skills enforce display card structures dynamically using variable slots (`[INDUSTRY]`, `[WORKER_NAME]`). |
+| **Run 5** | Universal Vault Integration | Replaced HK-specific rules with a jurisdiction-agnostic Vault file (`universal_clinic_template_framework.txt`) usable across any LexisNexis law. |
+| **Run 6** | Line-Level Statutory Pinpointing | Evaluated precise statutory extraction across Employment (Cap. 57 s.9), Data Privacy (Cap. 486 DPP4), and Sale of Goods (Cap. 26 s.12). |
+| **Run 7** | Dual-Audience Output Generation | Validated single-pass output generating technical statutory pinpointing alongside a 3-bullet non-lawyer client takeaway card. |
+| **Run 8** | Export Format & Web Bridge | Confirmed Protégé sanitizes raw HTML and exports strictly to Word/PDF; implemented the frontend Ingestion Bridge on `index.html` as a solution. |
 
-| Evaluation Metric | Protégé (LexisNexis) [Tested] | Harvey AI (Industry Benchmark) | Gemini Enterprise (General AI Benchmark) |
-| :--- | :--- | :--- | :--- |
-| **Primary Data Source** | Direct LexisNexis HK CaseBase & Cap. 57 DBs| Custom fine-tuned LLMs & Azure Vaults | Google Foundation Models & Workspace Drive |
-| **Citation Reliability** | **High** (Direct links to primary HK precedents)| **High** (Internal vault document citations) | **Medium** (Requires explicit web grounding) |
-| **Educational Adaptability** | **High** (via 2-Stage Scaffolding Prompts) | **Medium** (Corporate & M&A memo focus) | **High** (Strong natural language simplification) |
-| **Data Privacy Model** | Private Vaults (De-identified inputs recommended) | Isolated Enterprise SOC2 Vaults | Workspace IAM Boundary (No model retraining) |
+*Detailed empirical logs are available in [`testing_data/protege_test_outputs.md`](testing_data/protege_test_outputs.md) and the [`experiments/`](experiments/) directory.*
 
 ---
 
-## 🛠️ Repository Architecture
+## 📂 Repository Structure
 
 ```text
-lexisnexis-ai-hackathon/
-├── README.md                           # Project Summary & Key Findings
-├── index.html                          # Live Web Dashboard (GitHub Pages)
-├── docs/
-│   ├── Checkpoint_1.md                 # Initial Concept Proposal
-│   ├── Checkpoint_2.md                 # Mid-point Progress & Pivot Report
-│   └── Final_Report.md                 # Comprehensive Hackathon Evaluation
+.
+├── index.html                            # Live interactive dashboard & slide export engine
+├── README.md                             # Project documentation
 ├── testing_data/
-│   └── protege_test_outputs.md         # Raw Logged Protégé Output Runs
-├── templates/
-│   └── hk_employment_prompts.md        # Standardized Scaffolding Prompts
-└── comparative_analysis/
-    └── platform_comparison.csv         # Comparative Dataset
+│   └── protege_test_outputs.md          # Complete test logs (Runs 1–8)
+└── experiments/
+    ├── export_ingestion_bridge.md       # Word/PDF export ingestion bridge log
+    ├── presentation_export_guide.md     # Print styles & slide outline guide
+    ├── editable_slides_engine.md        # Client-side PptxGenJS engine log
+    └── disclaimer_and_slide_export.md   # Compliance, disclaimers & creator credits
+```
+
+🌐 Live Web Dashboard & Slide Generator Try the live interactive dashboard:
+
+👉 [https://melizzaanievas.github.io/lexisnexis-ai-hackathon/](https://melizzaanievas.github.io/lexisnexis-ai-hackathon/)
+
+How to Use the Live Dashboard: Select a pre-loaded industry scenario (Finance, Hospitality, or Logistics).
+
+Switch between University Legal Clinic View and Non-Lawyer Client View.
+
+Use the Protégé Word/**PDF** Live Ingestion Bridge to paste text exported from Protégé and render custom cards.
+
+Click 📊 Download Editable Slides (.pptx) to download a presentation deck that opens directly in Google Slides or PowerPoint.
+
+⚠️ Legal AI Disclaimer & Terms of Use This dashboard is an educational research tool powered by LexisNexis Protégé and generative AI models. Outputs do not constitute formal legal advice. Lawyers, legal practitioners, and users must independently verify all statutory provisions, case law citations, and legal analyses prior to professional or judicial reliance. The developers and providers disclaim all legal responsibility for actions taken based on generated content.
+
+👤 Author & Acknowledgments Developer: Melizza Anievas ([GitHub](https://github.com/melizzaanievas) | [LinkedIn](https://www.linkedin.com/in/melizza-anievas/))  
+
+Event: LexisNexis AI Hackathon **2026**
+
+Platform: Discover more about enterprise legal AI at [LexisNexis Protégé](https://www.lexisnexis.com/en-hk/products-and-services/online-solution/lexis-plus-protege?gad_source=1&gad_campaignid=24133535899&gbraid=0AAAAA-ENcK1zAYkv8jZgpWtyFAuZPfdAD&gclid=Cj0KCQjwhsrUBhDxARIsAN3AQSfa8iyHEPhnRVxxOIGQ_CfP7pbQU4_BJOARwQS8g3f0X-pm95ZTVf8aAhx0EALw_wcB).
