@@ -28,7 +28,7 @@ button:hover { background: #002244; }
 .minor { background-color: #fef8ec; border: 1px solid #fce4b6; color: #8a5340; }
 .exercise { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; color: #166534; }
 .bridge-box { background: #f0f4f8; border-left: 5px solid #003366; padding: 15px; margin-bottom: 25px; border-radius: 4px; }
-.authorities { background: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; font-size: 0.85em; }
+.authorities { background: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; font-size: 0.85em; overflow-x: auto; }
 textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; padding: 10px; font-family: inherit; margin-top: 8px; margin-bottom: 10px; }
 
 /* Disclaimer & Footer Styles */
@@ -105,7 +105,7 @@ This dashboard is an educational research tool powered by LexisNexis Protégé a
 <div class="footer">
 🛠️ <b>Hackathon Demo Notice:</b> This dashboard demonstrates experimental workflows tested during the <b>LexisNexis AI Hackathon 2026</b>. The full end-to-end tool remains a work in progress. Latest updates, experimental logs, and prompt frameworks can be found on <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon" target="_blank">GitHub</a>.<br>
 🔍 Explore <b><a href="https://www.lexisnexis.com/en-hk/products-and-services/online-solution/lexis-plus-protege?gad_source=1&gad_campaignid=24133535899&gbraid=0AAAAA-ENcK1zAYkv8jZgpWtyFAuZPfdAD&gclid=Cj0KCQjwhsrUBhDxARIsAN3AQSfa8iyHEPhnRVxxOIGQ_CfP7pbQU4_BJOARwQS8g3f0X-pm95ZTVf8aAhx0EALw_wcB" target="_blank">LexisNexis Protégé</a></b> for enterprise legal research.<br>
-🚀 Developed by <b>Melizza Anievas</b> | Connect on <a href="https://github.com/melizzaanievas" target="_blank">GitHub</a> & <a href="https://www/linkedin.com/in/melizza-anievas/" target="_blank">LinkedIn</a>
+🚀 Developed by <b>Melizza Anievas</b> | Connect on <a href="https://github.com/melizzaanievas" target="_blank">GitHub</a> & <a href="https://www.linkedin.com/in/melizza-anievas/" target="_blank">LinkedIn</a>
 </div>
 
 </div>
@@ -218,6 +218,14 @@ content.innerHTML = `
 }
 }
 
+// Clean helper function to strip raw statutory quote blocks from card summaries
+function cleanAssessmentText(text) {
+  let cleaned = text.replace(/"[^"]*"/g, '');
+  cleaned = cleaned.replace(/\(HK\)\s+Chapter\s+\d+[\s\S]*?(?=\.|$)/gi, '');
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  return cleaned;
+}
+
 function parseProtegeInput() {
 let rawText = document.getElementById('protegePaste').value.trim();
 if (!rawText) {
@@ -225,24 +233,17 @@ if (!rawText) {
   return;
 }
 
-// 0. Clean LexisNexis platform footers and metadata noise
-if (rawText.includes("Content supporting AI-generated response:")) {
-  rawText = rawText.split("Content supporting AI-generated response:")[0].trim();
+let fullRawTextForGrounding = rawText;
+
+if (rawText.includes("Content supporting AI-generated response")) {
+  rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
-if (rawText.includes("Content outside your subscription:")) {
-  rawText = rawText.split("Content outside your subscription:")[0].trim();
+if (rawText.includes("Content outside your subscription")) {
+  rawText = rawText.split("Content outside your subscription")[0].trim();
 }
 
-// 1. Purge all preamble prior to Section 1 ("The Scenario Card")
-let scenarioCardMatch = rawText.match(/(1\.\s*)?The Scenario Card/i);
-if (scenarioCardMatch) {
-  rawText = rawText.substring(scenarioCardMatch.index);
-} else if (rawText.includes("Protégé™")) {
-  rawText = rawText.split("Protégé™")[1].trim();
-}
-
-// Line-by-line parsing state machine
-let lines = rawText.split("\n");
+let sanitizedText = rawText.replace(/"[^"]*"/g, '');
+let lines = sanitizedText.split("\n");
 let currentState = "none";
 
 let scenarioBuf = [];
@@ -250,7 +251,6 @@ let grossBuf = [];
 let minorBuf = [];
 let exerciseBuf = [];
 let clientBuf = [];
-let groundingBuf = [];
 
 for (let i = 0; i < lines.length; i++) {
   let line = lines[i].trim();
@@ -258,94 +258,83 @@ for (let i = 0; i < lines.length; i++) {
 
   let lower = line.toLowerCase();
 
-  // Header detection triggers
-  if (lower.includes("scenario card")) {
+  if (lower.includes("scenario card") || lower.includes("industry:")) {
     currentState = "scenario";
+  } else if (lower.includes("high-threshold violation") || lower.includes("high risk / repudiatory breach") || lower.includes("high-threshold:")) {
+    currentState = "gross";
     continue;
-  } else if (lower.includes("high-threshold violation") || lower.includes("high-threshold:") || lower.includes("high-threshold defence") || lower.includes("high-threshold defense")) {
-    if (!lower.includes("the verdict (high-threshold")) {
-      currentState = "gross";
-      line = line.replace(/^(\d\.\s*)?high-threshold\s*(violation)?\s*:?/i, '').trim();
-      if (!line) continue;
-    }
-  } else if (lower.includes("low-threshold defence") || lower.includes("low-threshold defense") || lower.includes("low-threshold:")) {
+  } else if (lower.includes("low-threshold defence") || lower.includes("minor / non-repudiatory error") || lower.includes("low-threshold:")) {
     currentState = "minor";
-    line = line.replace(/^(\d\.\s*)?low-threshold\s*(defence|defense)?\s*:?/i, '').trim();
-    if (!line) continue;
+    continue;
   } else if (lower.includes("clinical exercise")) {
     currentState = "exercise";
     continue;
   } else if (lower.includes("client takeaways")) {
     currentState = "client";
     continue;
-  } else if (lower.includes("primary legal grounding")) {
+  } else if (lower.includes("primary legal grounding") || lower.includes("statutory clauses:")) {
     currentState = "grounding";
     continue;
   }
 
-  // Collect text based on active state
   if (currentState === "scenario") {
-    if (!lower.includes("the verdict")) scenarioBuf.push(line);
+    scenarioBuf.push(line);
   } else if (currentState === "gross") {
-    if (!lower.includes("low-threshold") && !lower.includes("the verdict")) grossBuf.push(line);
+    if (!lower.includes("minor / non-repudiatory") && !lower.includes("low-threshold")) {
+      grossBuf.push(line);
+    }
   } else if (currentState === "minor") {
-    if (!lower.includes("clinical exercise")) minorBuf.push(line);
+    if (!lower.includes("clinical exercise")) {
+      minorBuf.push(line);
+    }
   } else if (currentState === "exercise") {
-    if (!lower.includes("non-lawyer client takeaways")) exerciseBuf.push(line);
+    if (!lower.includes("client takeaways") && !lower.includes("primary legal grounding")) {
+      exerciseBuf.push(line);
+    }
   } else if (currentState === "client") {
-    if (!lower.includes("primary legal grounding")) clientBuf.push(line);
-  } else if (currentState === "grounding") {
-    groundingBuf.push(line);
+    if (!lower.includes("primary legal grounding")) {
+      clientBuf.push(line);
+    }
   }
 }
 
-// Section 1: Format Scenario Card Text
-let scenarioText = scenarioBuf.join(" ").replace(/----------------/g, '').trim();
-if (!scenarioText) {
-  scenarioText = "Custom Scenario Imported from Protégé.";
-}
+let scenarioText = cleanAssessmentText(scenarioBuf.join(" ")) || "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to a personal cloud drive to finish work over the weekend.";
 
-// Section 2: Format Verdicts
-let grossText = grossBuf.join(" ").trim() || "Jordan's transfer of unencrypted health records violates DPP3 and DPP4, exposing patient data to material breach risks.";
-let minorText = minorBuf.join(" ").trim() || "Jordan argues the transfer was an inadvertent work-from-home administrative oversight without willful intent.";
+let grossText = cleanAssessmentText(grossBuf.join(" ")) || "Jordan's action constitutes a serious breach of DPP4 (failure to safeguard personal data) and DPP3 (unauthorized use/disclosure without patient consent). Exposing sensitive health data creates a material security risk.";
 
-// Section 3: Format Quiz Questions
-let q1Text = "Q1: DPP4 requires healthcare staff to safeguard personal data regardless of work-from-home status? (TRUE)";
-let q2Text = "Q2: Transferring unencrypted patient data to personal cloud storage is permissible if deleted later? (FALSE)";
+let minorText = cleanAssessmentText(minorBuf.join(" ")) || "Jordan may argue that the transfer was an inadvertent administrative oversight motivated by remote work convenience rather than willful dishonesty. However, this defense is unlikely to succeed given strict privacy duties.";
 
-let fullExerciseText = exerciseBuf.join("\n");
-if (fullExerciseText.includes("Q2:")) {
-  let parts = fullExerciseText.split(/Q2:/i);
-  q1Text = parts[0].replace(/\n/g, ' ').replace(/^Q1:/i, '').trim();
+let q1Text = "Q1: DPP4 under Cap. 486 requires healthcare staff to safeguard personal data regardless of work-from-home status? (TRUE)";
+let q2Text = "Q2: Transferring unencrypted patient data to a personal cloud drive does not constitute a breach if deleted later? (FALSE)";
+
+let exerciseJoined = cleanAssessmentText(exerciseBuf.join(" "));
+if (exerciseJoined.includes("Q2:")) {
+  let parts = exerciseJoined.split("Q2:");
+  q1Text = parts[0].replace(/^Q1:/i, '').trim();
   if (!q1Text.toLowerCase().startsWith("q1:")) q1Text = "Q1: " + q1Text;
-  q2Text = "Q2: " + parts[1].replace(/\n/g, ' ').trim();
-} else if (exerciseBuf.length >= 2) {
-  q1Text = exerciseBuf[0];
-  q2Text = exerciseBuf.slice(1).join(" ");
+  q2Text = "Q2: " + parts[1].trim();
 }
 
-// Section 4: Format Client Takeaways
-let clientText = clientBuf.map(l => l.startsWith("•") || l.startsWith("-") ? l : "• " + l).join("\n");
+let clientText = clientBuf.map(l => cleanAssessmentText(l)).filter(l => l.length > 5).map(l => l.startsWith("•") ? l : "• " + l).join("\n");
 if (!clientText) {
-  clientText = "• Threshold Rule: Mass unauthorized transfers of health data meet the high threshold for summary dismissal.\n• Mistakes vs Breaches: Unintentional privacy breaches involving patient data exposure carry high legal risk.\n• Key Action Item: Use only authorized enterprise systems for remote medical data management.";
+  clientText = "• Mandatory Data Safeguards: Healthcare workers must adhere to DPP4 security guidelines even when working remotely.\n• Unapproved Cloud Usage: Transferring sensitive records to personal drives constitutes a serious breach under Cap. 486.\n• Summary Dismissal Risk: Breaches of patient confidentiality satisfy immediate termination criteria under Cap. 57 s.9.";
 }
 
-// Section 5: Format Legal Grounding
-let extractedAuthority = groundingBuf.join("\n").trim();
-if (!extractedAuthority) {
-  extractedAuthority = "Primary Statutory Anchor: Personal Data (Privacy) Ordinance (Cap. 486) DPP3 & DPP4\nLeading Precedent Ratio: PCPD Guidance on Patient Data Exposure & Cap. 57 s.9 Dismissal Framework\nCross-Domain Anchors Verified:\n - Employment Ordinance Cap. 57 s.9 Summary Dismissal";
+let authorityText = "Primary Statutory Anchor: Personal Data (Privacy) Ordinance (Cap. 486) DPP3 & DPP4\nLeading Precedent Ratio: PCPD Guidance on Patient Data Exposure & Cap. 57 s.9 Summary Dismissal Framework\nCross-Domain Anchors Verified:\n - Employment Ordinance Cap. 57 s.9 Summary Dismissal";
+
+if (fullRawTextForGrounding.includes("Statutory Clauses:")) {
+  authorityText = fullRawTextForGrounding.split("Statutory Clauses:")[1].trim();
 }
 
-// Save custom state
 customParsedData = {
-  title: "🎴 Custom Rendered Output (Protégé Live Ingestion Bridge)",
+  title: "🎴 Custom Rendered Output (Jordan Telehealth Scenario)",
   story: scenarioText,
   gross: grossText,
   minor: minorText,
   client: clientText,
   q1: q1Text,
   q2: q2Text,
-  authority: extractedAuthority
+  authority: authorityText
 };
 
 renderDashboard();
@@ -375,7 +364,7 @@ slide2.addText("⚖️ Minor / Non-Repudiatory Error\n\n" + data.minor, { x: 5.2
 
 let slide3 = pptx.addSlide();
 slide3.addText("📜 Primary Statutory & Precedent Grounding", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
-slide3.addText(data.authority, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 15, color: "F7FAFC", fill: { color: "2D3748" }, inset: 0.4, fontFace: "Courier New" });
+slide3.addText(data.authority, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 13, color: "F7FAFC", fill: { color: "2D3748" }, inset: 0.4, fontFace: "Courier New" });
 
 let slide4 = pptx.addSlide();
 slide4.addText("📝 University Legal Clinic Exercise", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
@@ -418,7 +407,7 @@ ${data.client}
 `.trim();
 
 navigator.clipboard.writeText(slideText).then(() => {
-alert("5-Slide Presentation outline copied! Open Google Slides or PowerPoint and paste directly into your presentation.");
+alert("5-Slide Presentation outline copied!");
 });
 }
 
