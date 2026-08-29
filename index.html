@@ -111,6 +111,8 @@ This dashboard is an educational research tool powered by LexisNexis Protégé a
 </div>
 
 <script>
+let customParsedData = null;
+
 const scenarios = {
 cloud: {
 title: "🎴 Scenario A: The Cloud Backup Dilemma (Finance)",
@@ -165,11 +167,17 @@ authority: "Primary Statutory Anchor: (HK) Sale of Goods Ordinance (Cap. 26) Sec
 };
 
 function renderDashboard() {
-const topic = document.getElementById('topicSelect').value;
 const audience = document.getElementById('audienceSelect').value;
 const content = document.getElementById('dashboardContent');
 const authorityBox = document.getElementById('authoritiesContent');
-const data = scenarios[topic] || scenarios.cloud;
+
+let data;
+if (customParsedData) {
+  data = customParsedData;
+} else {
+  const topic = document.getElementById('topicSelect').value;
+  data = scenarios[topic] || scenarios.cloud;
+}
 
 authorityBox.innerText = data.authority;
 
@@ -212,35 +220,45 @@ alert("Please paste text from your Protégé Word or PDF export first!");
 return;
 }
 
-// Smart parser for Protégé Universal Framework output
 let scenarioText = "Custom Scenario Imported from Protégé.";
 let grossText = "Refer to Protégé output for High-Threshold Liability details.";
 let minorText = "Refer to Protégé output for Low-Threshold Defense details.";
 let q1Text = "Q1: As extracted from Protégé output.";
 let q2Text = "Q2: As extracted from Protégé output.";
+let clientText = "• Custom Ingestion Takeaway: Verify statutory duties and primary references in Protégé.\n• Risk Assessment: Check whether policy breaches constitute repudiatory misconduct.\n• Professional Advice: Consult legal counsel prior to enforcing formal disciplinary actions.";
+let extractedAuthority = "Primary Statutory Anchor: Extracted from Protégé custom output.\nLeading Precedent Ratio: Evaluated via Universal Clinical Scaffolding Vault.";
 
+// Extract Scenario
 if (rawText.includes("The Scenario Card:")) {
   let parts = rawText.split("The Scenario Card:");
   if (parts[1]) {
-    scenarioText = parts[1].split("The Verdict:")[0].trim();
+    scenarioText = parts[1].split("The Verdict:")[0].split("----------------")[0].trim();
+  }
+} else {
+  let cleanLines = rawText.split("\n").filter(l => l.trim().length > 0 && !l.startsWith("Using ") && !l.startsWith("• [") && !l.startsWith("Melizza") && !l.startsWith("AI Assistant:"));
+  if (cleanLines.length > 0) {
+    scenarioText = cleanLines.slice(0, 3).join(" ");
   }
 }
 
+// Extract Verdict
 if (rawText.includes("The Verdict:")) {
   let verdictPart = rawText.split("The Verdict:")[1];
   if (verdictPart) {
     let subParts = verdictPart.split("Clinical Exercise:");
     let verdictText = subParts[0].trim();
-    let verdictLines = verdictText.split("\n").filter(l => l.trim().length > 0);
+    let verdictLines = verdictText.split("\n").filter(l => l.trim().length > 0 && !l.includes("-----"));
     if (verdictLines.length >= 2) {
       grossText = verdictLines[0].replace(/^-/, '').trim();
       minorText = verdictLines.slice(1).join(" ").replace(/^-/, '').trim();
-    } else {
-      grossText = verdictText;
+    } else if (verdictLines.length === 1) {
+      grossText = verdictLines[0];
+      minorText = "Evaluate mitigating factors, inadvertent oversight, or proportion of disciplinary penalty.";
     }
   }
 }
 
+// Extract Clinical Exercise
 if (rawText.includes("Clinical Exercise:")) {
   let exercisePart = rawText.split("Clinical Exercise:")[1];
   if (exercisePart) {
@@ -252,37 +270,51 @@ if (rawText.includes("Clinical Exercise:")) {
   }
 }
 
-const content = document.getElementById('dashboardContent');
-const authorityBox = document.getElementById('authoritiesContent');
+// Dynamic Authority Extraction (Detect laws mentioned in text)
+let statutesFound = [];
+if (rawText.includes("Cap. 486") || rawText.includes("Personal Data")) statutesFound.push("Personal Data (Privacy) Ordinance (Cap. 486) DPP4");
+if (rawText.includes("Cap. 57") || rawText.includes("Employment Ordinance")) statutesFound.push("Employment Ordinance (Cap. 57) Section 9(1)(a)(ii)");
+if (rawText.includes("Cap. 26") || rawText.includes("Sale of Goods")) statutesFound.push("Sale of Goods Ordinance (Cap. 26) Section 12(1)");
+if (rawText.includes("Cap. 201")) statutesFound.push("Prevention of Bribery Ordinance (Cap. 201) s 9");
 
-authorityBox.innerText = "Primary Statutory Anchor: Extracted dynamically from Protégé custom output.\nLeading Precedent Ratio: Evaluated via Universal Clinical Scaffolding Vault.";
+let precedentFound = "Relevant Hong Kong Judicial Precedents & Regulatory Guidelines";
+if (rawText.includes("Tsang Tak Chi")) precedentFound = "TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366";
+if (rawText.includes("PCPD")) precedentFound = "Privacy Commissioner for Personal Data (PCPD) Enforcement Guidance";
 
-content.innerHTML = `
-<div class="card">
-<h3>🎴 Custom Rendered Output (Protégé Live Bridge)</h3>
-<p>${scenarioText}</p>
-</div>
-<div class="grid">
-<div class="verdict-box gross">
-<h4>⚖️ High-Threshold / Violation Assessment</h4>
-<p>${grossText}</p>
-</div>
-<div class="verdict-box minor">
-<h4>⚖️ Low-Threshold / Defense Assessment</h4>
-<p>${minorText}</p>
-</div>
-</div>
-<div class="exercise">
-<h4>📝 Clinical Exercise (True / False)</h4>
-<p>1. <b>${q1Text}</b></p>
-<p>2. <b>${q2Text}</b></p>
-</div>
-`;
+if (statutesFound.length > 0) {
+  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0]}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - ${statutesFound.slice(1).join("\n - ") || "Universal Statutory & Regulatory Framework"}`;
+}
+
+// Construct Client Takeaways dynamically
+clientText = `• Statutory Scope: Extracted under ${statutesFound[0] || 'applicable Hong Kong ordinances'}.\n• Case Ratio: Guided by ${precedentFound}.\n• Operational Note: Ensure all internal actions comply with statutory notice and due process rules.`;
+
+// Save to custom global object so toggle views work seamlessly
+customParsedData = {
+  title: "🎴 Custom Rendered Output (Protégé Live Ingestion Bridge)",
+  story: scenarioText,
+  gross: grossText,
+  minor: minorText,
+  client: clientText,
+  q1: q1Text,
+  q2: q2Text,
+  authority: extractedAuthority
+};
+
+// Reset select box indication
+document.getElementById('topicSelect').value = "cloud";
+
+// Render Dashboard with Parsed Data
+renderDashboard();
 }
 
 function downloadEditablePowerPoint() {
-const topic = document.getElementById('topicSelect').value;
-const data = scenarios[topic] || scenarios.cloud;
+let data;
+if (customParsedData) {
+  data = customParsedData;
+} else {
+  const topic = document.getElementById('topicSelect').value;
+  data = scenarios[topic] || scenarios.cloud;
+}
 
 let pptx = new PptxGenJS();
 pptx.layout = 'LAYOUT_16x9';
@@ -309,12 +341,17 @@ let slide5 = pptx.addSlide();
 slide5.addText("📢 Non-Lawyer Stakeholder & Client Takeaways", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
 slide5.addText(data.client, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "166534", fill: { color: "F0FDF4" }, inset: 0.4 });
 
-pptx.writeFile({ fileName: `Protege_Briefing_${topic}_5Slides.pptx` });
+pptx.writeFile({ fileName: `Protege_Briefing_Custom_5Slides.pptx` });
 }
 
 function copySlideOutline() {
-const topic = document.getElementById('topicSelect').value;
-const data = scenarios[topic] || scenarios.cloud;
+let data;
+if (customParsedData) {
+  data = customParsedData;
+} else {
+  const topic = document.getElementById('topicSelect').value;
+  data = scenarios[topic] || scenarios.cloud;
+}
 
 const slideText = `
 SLIDE 1: ${data.title}
