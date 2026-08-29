@@ -56,7 +56,7 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <div class="bridge-box">
 <h3>📥 Protégé Word / PDF Export Live Ingestion Bridge</h3>
 <p style="font-size: 0.9em; color: #444;">Paste raw text exported from your Protégé Word/PDF export below. The parser will automatically format it into interactive web display cards:</p>
-<textarea id="protegePaste" rows="4" placeholder="Paste raw Protégé output here..."></textarea>
+<textarea id="protegePaste" rows="4" placeholder="Paste raw Protégé text here..."></textarea>
 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 <button onclick="parseProtegeInput()">Render Custom Display Cards</button>
 <span style="font-size: 0.85em; color: #666;">Need the prompt template? <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon/tree/main/experiments" target="_blank" style="color: #003366; font-weight: bold;">Learn how to prompt Protégé for exports ↗</a></span>
@@ -225,7 +225,7 @@ if (!rawText) {
   return;
 }
 
-// Clean LexisNexis platform footers and subscription notes
+// 0. Clean system notes and user prompts
 if (rawText.includes("Content supporting AI-generated response:")) {
   rawText = rawText.split("Content supporting AI-generated response:")[0].trim();
 }
@@ -233,84 +233,95 @@ if (rawText.includes("Content outside your subscription:")) {
   rawText = rawText.split("Content outside your subscription:")[0].trim();
 }
 
-// Strip user prompt, speaker labels, and instructions
-if (rawText.includes("Protégé™")) {
+// Strip user prompt preamble
+let startIdx = rawText.search(/(1\.\s*)?(The\s*)?Scenario Card/i);
+if (startIdx !== -1) {
+  rawText = rawText.substring(startIdx).trim();
+} else if (rawText.includes("Protégé™")) {
   rawText = rawText.split("Protégé™")[1].trim();
 }
 
-// Remove any leading instruction lines or parameter lists before Section 1
-let scenarioStartIndex = rawText.search(/(1\.\s*)?(The\s*)?Scenario Card/i);
-if (scenarioStartIndex !== -1) {
-  rawText = rawText.substring(scenarioStartIndex).trim();
+// State Machine Parser across lines
+let lines = rawText.split("\n");
+let currentState = "none";
+
+let scenarioBuf = [];
+let grossBuf = [];
+let minorBuf = [];
+let exerciseBuf = [];
+let clientBuf = [];
+let groundingBuf = [];
+
+for (let i = 0; i < lines.length; i++) {
+  let line = lines[i].trim();
+  if (!line) continue;
+
+  let lower = line.toLowerCase();
+
+  // State transitions
+  if (lower.includes("scenario card")) {
+    currentState = "scenario";
+    continue;
+  } else if (lower.includes("high-threshold") || lower.includes("high_threshold") || lower.includes("gross misconduct")) {
+    currentState = "gross";
+    line = line.replace(/^(high-threshold|high_threshold|gross misconduct)(\s*violation)?:?/i, '').trim();
+    if (!line) continue;
+  } else if (lower.includes("low-threshold") || lower.includes("low_threshold") || lower.includes("minor negligence") || lower.includes("mitigating factor")) {
+    currentState = "minor";
+    line = line.replace(/^(low-threshold|low_threshold|minor negligence)(\s*defen[sc]e)?:?/i, '').trim();
+    if (!line) continue;
+  } else if (lower.includes("clinical exercise")) {
+    currentState = "exercise";
+    continue;
+  } else if (lower.includes("client takeaways")) {
+    currentState = "client";
+    continue;
+  } else if (lower.includes("primary legal grounding") || lower.includes("legal grounding")) {
+    currentState = "grounding";
+    continue;
+  }
+
+  // Collect text based on current active state
+  if (currentState === "scenario") {
+    scenarioBuf.push(line);
+  } else if (currentState === "gross") {
+    if (!lower.includes("the verdict")) grossBuf.push(line);
+  } else if (currentState === "minor") {
+    if (!lower.includes("outcome:")) minorBuf.push(line);
+  } else if (currentState === "exercise") {
+    exerciseBuf.push(line);
+  } else if (currentState === "client") {
+    clientBuf.push(line);
+  } else if (currentState === "grounding") {
+    groundingBuf.push(line);
+  }
 }
 
-let scenarioText = "Custom Scenario Imported from Protégé.";
-let grossText = "High-Threshold analysis not detected in input text.";
-let minorText = "Low-Threshold defense analysis not detected in input text.";
+// Format buffers into string variables
+let scenarioText = scenarioBuf.join(" ").replace(/----------------/g, '').trim() || "Custom Scenario Imported from Protégé.";
+let grossText = grossBuf.join(" ").trim() || "High-Threshold analysis not detected.";
+let minorText = minorBuf.join(" ").trim() || "Low-Threshold defense analysis not detected.";
+
 let q1Text = "Q1: As extracted from Protégé output.";
 let q2Text = "Q2: As extracted from Protégé output.";
-let clientText = "";
-let extractedAuthority = "";
-
-// 1. Extract Scenario Card (Section 1)
-let verdictIndex = rawText.search(/(2\.\s*)?(The\s*)?Verdict/i);
-if (verdictIndex !== -1) {
-  let sec1 = rawText.substring(0, verdictIndex);
-  scenarioText = sec1.replace(/^(1\.\s*)?(The\s*)?Scenario Card\s*/i, '').replace(/----------------/g, '').trim();
-}
-
-// 2. Extract Verdict (Section 2)
-let exerciseIndex = rawText.search(/(3\.\s*)?Clinical Exercise/i);
-if (verdictIndex !== -1 && exerciseIndex !== -1) {
-  let sec2 = rawText.substring(verdictIndex, exerciseIndex).replace(/^(2\.\s*)?(The\s*)?Verdict(\s*\(.*?\))?\s*/i, '').trim();
-  
-  let lowIndex = sec2.search(/Low-Threshold\s*(Defense|Defence)?/i);
-  if (lowIndex !== -1) {
-    grossText = sec2.substring(0, lowIndex).replace(/High-Threshold\s*(Violation)?\s*:?/i, '').trim();
-    minorText = sec2.substring(lowIndex).replace(/Low-Threshold\s*(Defense|Defence)?\s*:?/i, '').trim();
-  } else {
-    grossText = sec2;
-    minorText = "Evaluate mitigating factors or inadvertent technical oversight.";
+if (exerciseBuf.length >= 2) {
+  q1Text = exerciseBuf[0];
+  q2Text = exerciseBuf.slice(1).join(" ");
+  if (q2Text.includes("Q2:")) {
+    let parts = exerciseBuf.join("\n").split(/Q2:/i);
+    q1Text = parts[0].replace(/\n/g, ' ').trim();
+    q2Text = "Q2: " + parts[1].replace(/\n/g, ' ').trim();
   }
+} else if (exerciseBuf.length === 1) {
+  q1Text = exerciseBuf[0];
 }
 
-// 3. Extract Clinical Exercise (Section 3)
-let clientIndex = rawText.search(/(4\.\s*)?(Non-Lawyer\s*)?Client Takeaways/i);
-if (exerciseIndex !== -1) {
-  let endExercise = (clientIndex !== -1) ? clientIndex : rawText.length;
-  let sec3 = rawText.substring(exerciseIndex, endExercise).replace(/^(3\.\s*)?Clinical Exercise(\s*\(.*?\))?\s*/i, '').trim();
-  
-  let qLines = sec3.split("\n").filter(l => l.trim().length > 0);
-  if (qLines.length >= 2) {
-    q1Text = qLines[0].trim();
-    q2Text = qLines.slice(1).join(" ").trim();
-    if (q2Text.includes("Q2:")) {
-      let parts = sec3.split(/Q2:/i);
-      q1Text = parts[0].trim();
-      q2Text = "Q2: " + parts[1].trim();
-    }
-  }
-}
-
-// 4. Extract Non-Lawyer Client Takeaways (Section 4)
-let groundingIndex = rawText.search(/(5\.\s*)?Primary Legal Grounding/i);
-if (clientIndex !== -1) {
-  let endClient = (groundingIndex !== -1) ? groundingIndex : rawText.length;
-  let sec4 = rawText.substring(clientIndex, endClient).replace(/^(4\.\s*)?(Non-Lawyer\s*)?Client Takeaways\s*/i, '').trim();
-  let lines = sec4.split("\n").filter(l => l.trim().length > 0);
-  clientText = lines.map(l => l.trim().startsWith("•") || l.trim().startsWith("-") ? l.trim() : "• " + l.trim()).join("\n");
-}
-
+let clientText = clientBuf.map(l => l.startsWith("•") || l.startsWith("-") ? l : "• " + l).join("\n");
 if (!clientText) {
   clientText = "• Statutory Boundary: Review specific obligations under relevant HK ordinances.\n• Errors vs Misconduct: Unintentional errors generally do not justify summary termination.\n• Action Item: Maintain clear policy documentation and conduct prior investigations.";
 }
 
-// 5. Extract Section 5 Legal Grounding directly
-if (groundingIndex !== -1) {
-  extractedAuthority = rawText.substring(groundingIndex).replace(/^(5\.\s*)?Primary Legal Grounding\s*(& Pinpointing)?\s*/i, '').trim();
-}
-
-// Fallback Dynamic Legal Grounding Extraction
+let extractedAuthority = groundingBuf.join("\n").trim();
 if (!extractedAuthority) {
   let statutesFound = [];
   if (rawText.includes("Cap. 486") || rawText.includes("Personal Data")) statutesFound.push("Personal Data (Privacy) Ordinance (Cap. 486) DPP3 & DPP4");
@@ -325,7 +336,7 @@ if (!extractedAuthority) {
   extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0] || "Personal Data (Privacy) Ordinance (Cap. 486)"}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - Employment Ordinance (Cap. 57) s. 9 Summary Dismissal Framework`;
 }
 
-// Save to custom state for UI rendering and PowerPoint export
+// Store custom state
 customParsedData = {
   title: "🎴 Custom Rendered Output (Protégé Live Ingestion Bridge)",
   story: scenarioText,
