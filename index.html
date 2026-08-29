@@ -56,7 +56,7 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <div class="bridge-box">
 <h3>📥 Protégé Word / PDF Export Live Ingestion Bridge</h3>
 <p style="font-size: 0.9em; color: #444;">Paste raw text exported from your Protégé Word/PDF export below. The parser will automatically format it into interactive web display cards:</p>
-<textarea id="protegePaste" rows="4" placeholder="Paste Protégé output here (e.g. The Scenario Card, The Verdict, Clinical Exercise)..."></textarea>
+<textarea id="protegePaste" rows="4" placeholder="Paste Protégé output here (e.g. 1. The Scenario Card, 2. The Verdict, 3. Clinical Exercise, 4. Non-Lawyer Client Takeaways)..."></textarea>
 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 <button onclick="parseProtegeInput()">Render Custom Display Cards</button>
 <span style="font-size: 0.85em; color: #666;">Need the prompt template? <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon/tree/main/experiments" target="_blank" style="color: #003366; font-weight: bold;">Learn how to prompt Protégé for exports ↗</a></span>
@@ -66,7 +66,7 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <div class="controls">
 <div>
 <label><b>Pre-Loaded Industry Scenario:</b></label><br>
-<select id="topicSelect" onchange="renderDashboard()">
+<select id="topicSelect" onchange="resetCustomAndRender()">
 <option value="cloud">Summary Dismissal: Cloud Backup (Finance)</option>
 <option value="flyers">Summary Dismissal: Printer Misuse (Hospitality)</option>
 <option value="van">Summary Dismissal: Vehicle Misuse (Logistics)</option>
@@ -166,6 +166,11 @@ authority: "Primary Statutory Anchor: (HK) Sale of Goods Ordinance (Cap. 26) Sec
 }
 };
 
+function resetCustomAndRender() {
+  customParsedData = null;
+  renderDashboard();
+}
+
 function renderDashboard() {
 const audience = document.getElementById('audienceSelect').value;
 const content = document.getElementById('dashboardContent');
@@ -221,74 +226,86 @@ return;
 }
 
 let scenarioText = "Custom Scenario Imported from Protégé.";
-let grossText = "Refer to Protégé output for High-Threshold Liability details.";
-let minorText = "Refer to Protégé output for Low-Threshold Defense details.";
+let grossText = "High-Threshold analysis not detected in input text.";
+let minorText = "Low-Threshold defense analysis not detected in input text.";
 let q1Text = "Q1: As extracted from Protégé output.";
 let q2Text = "Q2: As extracted from Protégé output.";
-let clientText = "• Custom Ingestion Takeaway: Verify statutory duties and primary references in Protégé.\n• Risk Assessment: Check whether policy breaches constitute repudiatory misconduct.\n• Professional Advice: Consult legal counsel prior to enforcing formal disciplinary actions.";
+let clientText = "";
 let extractedAuthority = "Primary Statutory Anchor: Extracted from Protégé custom output.\nLeading Precedent Ratio: Evaluated via Universal Clinical Scaffolding Vault.";
 
-// Extract Scenario
-if (rawText.includes("The Scenario Card:")) {
-  let parts = rawText.split("The Scenario Card:");
-  if (parts[1]) {
-    scenarioText = parts[1].split("The Verdict:")[0].split("----------------")[0].trim();
+// 1. Extract Scenario Card
+if (rawText.toLowerCase().includes("scenario card:")) {
+  let part = rawText.split(/scenario card:/i)[1];
+  if (part) {
+    scenarioText = part.split(/2\.|the verdict:|verdict:/i)[0].replace(/----------------/g, '').trim();
   }
 } else {
-  let cleanLines = rawText.split("\n").filter(l => l.trim().length > 0 && !l.startsWith("Using ") && !l.startsWith("• [") && !l.startsWith("Melizza") && !l.startsWith("AI Assistant:"));
-  if (cleanLines.length > 0) {
-    scenarioText = cleanLines.slice(0, 3).join(" ");
-  }
+  let cleanLines = rawText.split("\n").filter(l => l.trim().length > 0 && !l.startsWith("Using ") && !l.startsWith("• ["));
+  if (cleanLines.length > 0) scenarioText = cleanLines.slice(0, 3).join(" ");
 }
 
-// Extract Verdict
-if (rawText.includes("The Verdict:")) {
-  let verdictPart = rawText.split("The Verdict:")[1];
-  if (verdictPart) {
-    let subParts = verdictPart.split("Clinical Exercise:");
-    let verdictText = subParts[0].trim();
-    let verdictLines = verdictText.split("\n").filter(l => l.trim().length > 0 && !l.includes("-----"));
-    if (verdictLines.length >= 2) {
-      grossText = verdictLines[0].replace(/^-/, '').trim();
-      minorText = verdictLines.slice(1).join(" ").replace(/^-/, '').trim();
-    } else if (verdictLines.length === 1) {
-      grossText = verdictLines[0];
-      minorText = "Evaluate mitigating factors, inadvertent oversight, or proportion of disciplinary penalty.";
+// 2. Extract Verdicts (High vs Low Threshold)
+if (rawText.toLowerCase().includes("verdict:")) {
+  let verdictBlock = rawText.split(/verdict:/i)[1];
+  if (verdictBlock) {
+    let subBlock = verdictBlock.split(/3\.|clinical exercise:/i)[0].trim();
+    
+    // Split by High vs Low keyword triggers
+    if (subBlock.toLowerCase().includes("low-threshold") || subBlock.toLowerCase().includes("minor negligence") || subBlock.toLowerCase().includes("low_threshold")) {
+      let highLowSplit = subBlock.split(/(?=low-threshold|low_threshold|minor negligence|mitigating factor)/i);
+      grossText = highLowSplit[0].trim().replace(/^[-*•]\s*/, '');
+      minorText = (highLowSplit[1] || "").trim().replace(/^[-*•]\s*/, '');
+    } else {
+      grossText = subBlock;
+      minorText = "Evaluate mitigating factors or inadvertent administrative oversight.";
     }
   }
 }
 
-// Extract Clinical Exercise
-if (rawText.includes("Clinical Exercise:")) {
-  let exercisePart = rawText.split("Clinical Exercise:")[1];
-  if (exercisePart) {
-    let exLines = exercisePart.split("\n").filter(l => l.trim().length > 0);
+// 3. Extract Clinical Exercise
+if (rawText.toLowerCase().includes("clinical exercise:")) {
+  let exerciseBlock = rawText.split(/clinical exercise:/i)[1];
+  if (exerciseBlock) {
+    let cleanBlock = exerciseBlock.split(/4\.|non-lawyer client takeaways:|client takeaways:/i)[0].trim();
+    let exLines = cleanBlock.split("\n").filter(l => l.trim().length > 0);
     if (exLines.length >= 2) {
       q1Text = exLines[0].trim();
       q2Text = exLines[1].trim();
+    } else if (exLines.length === 1) {
+      q1Text = exLines[0].trim();
     }
   }
 }
 
-// Dynamic Authority Extraction (Detect laws mentioned in text)
+// 4. Extract Non-Lawyer Client Takeaways (Section 4)
+if (rawText.toLowerCase().includes("client takeaways:")) {
+  let clientBlock = rawText.split(/client takeaways:/i)[1];
+  if (clientBlock) {
+    let lines = clientBlock.split("\n").filter(l => l.trim().length > 0);
+    clientText = lines.map(l => l.trim().startsWith("•") || l.trim().startsWith("-") ? l.trim() : "• " + l.trim()).join("\n");
+  }
+}
+
+// Fallback for Client Takeaway if Section 4 not present
+if (!clientText) {
+  clientText = "• Statutory Boundary: Review specific obligations under relevant HK ordinances.\n• Errors vs Misconduct: Unintentional errors generally do not justify summary termination.\n• Action Item: Maintain clear policy documentation and conduct prior investigations.";
+}
+
+// 5. Dynamic Authority Extraction
 let statutesFound = [];
-if (rawText.includes("Cap. 486") || rawText.includes("Personal Data")) statutesFound.push("Personal Data (Privacy) Ordinance (Cap. 486) DPP4");
+if (rawText.includes("Cap. 486") || rawText.includes("Personal Data")) statutesFound.push("Personal Data (Privacy) Ordinance (Cap. 486)");
 if (rawText.includes("Cap. 57") || rawText.includes("Employment Ordinance")) statutesFound.push("Employment Ordinance (Cap. 57) Section 9(1)(a)(ii)");
 if (rawText.includes("Cap. 26") || rawText.includes("Sale of Goods")) statutesFound.push("Sale of Goods Ordinance (Cap. 26) Section 12(1)");
 if (rawText.includes("Cap. 201")) statutesFound.push("Prevention of Bribery Ordinance (Cap. 201) s 9");
 
-let precedentFound = "Relevant Hong Kong Judicial Precedents & Regulatory Guidelines";
+let precedentFound = "Relevant Hong Kong Judicial Precedents & PCPD Rulings";
 if (rawText.includes("Tsang Tak Chi")) precedentFound = "TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366";
-if (rawText.includes("PCPD")) precedentFound = "Privacy Commissioner for Personal Data (PCPD) Enforcement Guidance";
 
 if (statutesFound.length > 0) {
-  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0]}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - ${statutesFound.slice(1).join("\n - ") || "Universal Statutory & Regulatory Framework"}`;
+  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0]}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - ${statutesFound.slice(1).join("\n - ") || "Universal Statutory Framework"}`;
 }
 
-// Construct Client Takeaways dynamically
-clientText = `• Statutory Scope: Extracted under ${statutesFound[0] || 'applicable Hong Kong ordinances'}.\n• Case Ratio: Guided by ${precedentFound}.\n• Operational Note: Ensure all internal actions comply with statutory notice and due process rules.`;
-
-// Save to custom global object so toggle views work seamlessly
+// Save to custom state for UI rendering and PowerPoint export
 customParsedData = {
   title: "🎴 Custom Rendered Output (Protégé Live Ingestion Bridge)",
   story: scenarioText,
@@ -300,10 +317,7 @@ customParsedData = {
   authority: extractedAuthority
 };
 
-// Reset select box indication
-document.getElementById('topicSelect').value = "cloud";
-
-// Render Dashboard with Parsed Data
+// Render Dashboard
 renderDashboard();
 }
 
