@@ -82,7 +82,7 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 </div>
 
 <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-<button onclick="downloadEditablePowerPoint()" class="btn-pptx">📊 Download Editable Slides (.pptx)</button>
+<button onclick="downloadEditablePowerPoint()" class="btn-pptx">📊 Download 5-Slide Presentation (.pptx)</button>
 <button onclick="window.print()">🖨️ Print / Export PDF</button>
 <button onclick="copySlideOutline()" class="btn-secondary">📋 Copy Outline</button>
 </div>
@@ -212,24 +212,34 @@ slide1.background = { color: "F4F6F8" };
 slide1.addText(data.title, { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 22, bold: true, color: "003366" });
 slide1.addText(data.story, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
 
-// Slide 2: Dual Assessment
+// Slide 2: Dual Legal Assessment
 let slide2 = pptx.addSlide();
 slide2.addText("Dual Legal Analysis & Threshold Assessment", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
 slide2.addText("⚖️ High Risk / Repudiatory Breach\n\n" + data.gross, { x: 0.5, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "9B1C1C", fill: { color: "FDF2F2" }, inset: 0.3 });
 slide2.addText("⚖️ Minor / Non-Repudiatory Error\n\n" + data.minor, { x: 5.2, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "8A5340", fill: { color: "FEF8EC" }, inset: 0.3 });
 
-// Slide 3: Client Takeaways
+// Slide 3: Statutory & Precedent Grounding
 let slide3 = pptx.addSlide();
-slide3.addText("📢 Non-Lawyer Stakeholder & Client Takeaways", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
-slide3.addText(data.client, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "166534", fill: { color: "F0FDF4" }, inset: 0.3 });
+slide3.addText("📜 Primary Statutory & Precedent Grounding", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide3.addText(
+"Primary Statutory Anchor:\n(HK) Chapter 57 EMPLOYMENT ORDINANCE s 9(1)(a)(ii)\n\n" +
+"Leading Precedent Ratio:\nTSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366\n\n" +
+"Cross-Domain Anchors Verified:\n• Personal Data (Privacy) Ordinance (Cap. 486) Schedule 1, DPP4(1)\n• Sale of Goods Ordinance (Cap. 26) Section 12(1)", 
+{ x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 15, color: "F7FAFC", fill: { color: "2D3748" }, inset: 0.4, fontFace: "Courier New" }
+);
 
 // Slide 4: Clinical Exercise
 let slide4 = pptx.addSlide();
 slide4.addText("📝 University Legal Clinic Exercise", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
 slide4.addText("1. " + data.q1 + "\n\n2. " + data.q2, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
 
-// Save the editable file
-pptx.writeFile({ fileName: `Protege_Briefing_${topic}.pptx` });
+// Slide 5: Non-Lawyer Client Takeaway
+let slide5 = pptx.addSlide();
+slide5.addText("📢 Non-Lawyer Stakeholder & Client Takeaways", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide5.addText(data.client, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "166534", fill: { color: "F0FDF4" }, inset: 0.4 });
+
+// Save the 5-slide presentation file
+pptx.writeFile({ fileName: `Protege_Briefing_${topic}_5Slides.pptx` });
 }
 
 function parseProtegeInput() {
@@ -261,16 +271,19 @@ SLIDE 2: Dual Legal Analysis & Threshold Assessment
 • High Risk / Repudiatory Breach: ${data.gross}
 • Minor / Non-Repudiatory Error: ${data.minor}
 
-SLIDE 3: Non-Lawyer Stakeholder & Client Takeaways
-${data.client}
+SLIDE 3: Statutory & Precedent Grounding
+• Cap. 57 s.9(1)(a)(ii) & Tsang Tak Chi v China Wall Ltd
 
 SLIDE 4: Clinical Exercise
 1. ${data.q1}
 2. ${data.q2}
+
+SLIDE 5: Non-Lawyer Stakeholder & Client Takeaways
+${data.client}
 `.trim();
 
 navigator.clipboard.writeText(slideText).then(() => {
-alert("Presentation outline copied! Open Google Slides or PowerPoint and paste directly into your presentation.");
+alert("5-Slide Presentation outline copied! Open Google Slides or PowerPoint and paste directly into your presentation.");
 });
 }
 
