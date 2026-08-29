@@ -48,14 +48,16 @@ The **Scenario-to-Authority Educational Engine** bridges the gap between high-pr
 
 ```text
 .
-├── index.html                            # Live interactive dashboard & slide export engine
-├── README.md                             # Project documentation
+├── index.html                            # Live interactive dashboard & 5-slide PPTX export engine
+├── README.md                             # Repository documentation
 ├── testing_data/
+│   ├── universal_clinic_template_framework.txt # Exact Vault template file
 │   └── protege_test_outputs.md          # Complete test logs (Runs 1–8)
 └── experiments/
-    ├── export_ingestion_bridge.md       # Word/PDF export ingestion bridge log
-    ├── presentation_export_guide.md     # Print styles & slide outline guide
-    ├── editable_slides_engine.md        # Client-side PptxGenJS engine log
+    ├── protege_skill_instructions.md    # Step-by-step Vault & Skill setup guide
+    ├── protege_prompt_guide.md          # General prompting guide across legal domains
+    ├── export_ingestion_bridge.md       # Ingestion bridge technical log
+    ├── editable_slides_engine.md        # Client-side 5-slide PPTX engine log
     └── disclaimer_and_slide_export.md   # Compliance, disclaimers & creator credits
 ```
 
