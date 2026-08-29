@@ -56,7 +56,7 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <div class="bridge-box">
 <h3>📥 Protégé Word / PDF Export Live Ingestion Bridge</h3>
 <p style="font-size: 0.9em; color: #444;">Paste raw text exported from your Protégé Word/PDF export below. The parser will automatically format it into interactive web display cards:</p>
-<textarea id="protegePaste" rows="4" placeholder="Paste Protégé output here (e.g. 1. The Scenario Card, 2. The Verdict, 3. Clinical Exercise, 4. Non-Lawyer Client Takeaways)..."></textarea>
+<textarea id="protegePaste" rows="4" placeholder="Paste Protégé output here (e.g. 1. The Scenario Card, 2. The Verdict, 3. Clinical Exercise, 4. Non-Lawyer Client Takeaways, 5. Legal Grounding)..."></textarea>
 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 <button onclick="parseProtegeInput()">Render Custom Display Cards</button>
 <span style="font-size: 0.85em; color: #666;">Need the prompt template? <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon/tree/main/experiments" target="_blank" style="color: #003366; font-weight: bold;">Learn how to prompt Protégé for exports ↗</a></span>
@@ -231,7 +231,7 @@ let minorText = "Low-Threshold defense analysis not detected in input text.";
 let q1Text = "Q1: As extracted from Protégé output.";
 let q2Text = "Q2: As extracted from Protégé output.";
 let clientText = "";
-let extractedAuthority = "Primary Statutory Anchor: Extracted from Protégé custom output.\nLeading Precedent Ratio: Evaluated via Universal Clinical Scaffolding Vault.";
+let extractedAuthority = "";
 
 // 1. Extract Scenario Card
 if (rawText.toLowerCase().includes("scenario card:")) {
@@ -250,7 +250,6 @@ if (rawText.toLowerCase().includes("verdict:")) {
   if (verdictBlock) {
     let subBlock = verdictBlock.split(/3\.|clinical exercise:/i)[0].trim();
     
-    // Split by High vs Low keyword triggers
     if (subBlock.toLowerCase().includes("low-threshold") || subBlock.toLowerCase().includes("minor negligence") || subBlock.toLowerCase().includes("low_threshold")) {
       let highLowSplit = subBlock.split(/(?=low-threshold|low_threshold|minor negligence|mitigating factor)/i);
       grossText = highLowSplit[0].trim().replace(/^[-*•]\s*/, '');
@@ -266,7 +265,7 @@ if (rawText.toLowerCase().includes("verdict:")) {
 if (rawText.toLowerCase().includes("clinical exercise:")) {
   let exerciseBlock = rawText.split(/clinical exercise:/i)[1];
   if (exerciseBlock) {
-    let cleanBlock = exerciseBlock.split(/4\.|non-lawyer client takeaways:|client takeaways:/i)[0].trim();
+    let cleanBlock = exerciseBlock.split(/4\.|non-lawyer client takeaways:|client takeaways:|5\.|primary legal grounding/i)[0].trim();
     let exLines = cleanBlock.split("\n").filter(l => l.trim().length > 0);
     if (exLines.length >= 2) {
       q1Text = exLines[0].trim();
@@ -281,28 +280,36 @@ if (rawText.toLowerCase().includes("clinical exercise:")) {
 if (rawText.toLowerCase().includes("client takeaways:")) {
   let clientBlock = rawText.split(/client takeaways:/i)[1];
   if (clientBlock) {
-    let lines = clientBlock.split("\n").filter(l => l.trim().length > 0);
+    let cleanClientBlock = clientBlock.split(/5\.|primary legal grounding|legal grounding:/i)[0].trim();
+    let lines = cleanClientBlock.split("\n").filter(l => l.trim().length > 0);
     clientText = lines.map(l => l.trim().startsWith("•") || l.trim().startsWith("-") ? l.trim() : "• " + l.trim()).join("\n");
   }
 }
 
-// Fallback for Client Takeaway if Section 4 not present
 if (!clientText) {
   clientText = "• Statutory Boundary: Review specific obligations under relevant HK ordinances.\n• Errors vs Misconduct: Unintentional errors generally do not justify summary termination.\n• Action Item: Maintain clear policy documentation and conduct prior investigations.";
 }
 
-// 5. Dynamic Authority Extraction
-let statutesFound = [];
-if (rawText.includes("Cap. 486") || rawText.includes("Personal Data")) statutesFound.push("Personal Data (Privacy) Ordinance (Cap. 486)");
-if (rawText.includes("Cap. 57") || rawText.includes("Employment Ordinance")) statutesFound.push("Employment Ordinance (Cap. 57) Section 9(1)(a)(ii)");
-if (rawText.includes("Cap. 26") || rawText.includes("Sale of Goods")) statutesFound.push("Sale of Goods Ordinance (Cap. 26) Section 12(1)");
-if (rawText.includes("Cap. 201")) statutesFound.push("Prevention of Bribery Ordinance (Cap. 201) s 9");
+// 5. Extract Section 5 Legal Grounding directly if present
+if (rawText.toLowerCase().includes("primary legal grounding") || rawText.toLowerCase().includes("legal grounding:")) {
+  let groundingBlock = rawText.split(/primary legal grounding|legal grounding:/i)[1];
+  if (groundingBlock) {
+    extractedAuthority = groundingBlock.trim();
+  }
+}
 
-let precedentFound = "Relevant Hong Kong Judicial Precedents & PCPD Rulings";
-if (rawText.includes("Tsang Tak Chi")) precedentFound = "TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366";
+// Fallback Dynamic Legal Grounding Extraction
+if (!extractedAuthority) {
+  let statutesFound = [];
+  if (rawText.includes("Cap. 486") || rawText.includes("Personal Data")) statutesFound.push("Personal Data (Privacy) Ordinance (Cap. 486) DPP3 & DPP4");
+  if (rawText.includes("Cap. 57") || rawText.includes("Employment Ordinance")) statutesFound.push("Employment Ordinance (Cap. 57) Section 9(1)(a)(ii)");
+  if (rawText.includes("Cap. 26") || rawText.includes("Sale of Goods")) statutesFound.push("Sale of Goods Ordinance (Cap. 26) Section 12(1)");
+  if (rawText.includes("Cap. 201")) statutesFound.push("Prevention of Bribery Ordinance (Cap. 201) s 9");
 
-if (statutesFound.length > 0) {
-  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0]}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - ${statutesFound.slice(1).join("\n - ") || "Universal Statutory Framework"}`;
+  let precedentFound = "Relevant HK Judicial Precedents & PCPD Rulings";
+  if (rawText.includes("Tsang Tak Chi")) precedentFound = "TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366";
+
+  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0] || "Personal Data (Privacy) Ordinance (Cap. 486)"}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - Employment Ordinance (Cap. 57) s. 9 Summary Dismissal Framework`;
 }
 
 // Save to custom state for UI rendering and PowerPoint export
@@ -317,7 +324,6 @@ customParsedData = {
   authority: extractedAuthority
 };
 
-// Render Dashboard
 renderDashboard();
 }
 
