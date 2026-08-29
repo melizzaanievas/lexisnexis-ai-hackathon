@@ -218,19 +218,22 @@ content.innerHTML = `
 }
 }
 
-// Cleaning helper function to purge legal citation noise and repetitive titles from summary cards
+// Cleaning helper function to purge legal citation noise, structural titles, and redundant headers from card text
 function cleanCardText(text) {
   if (!text) return "";
   let cleaned = text;
-  // Strip out verbatim quotes enclosed in quotation marks
+  // Remove verbatim quote blocks
   cleaned = cleaned.replace(/"[^"]*"/g, '');
-  // Strip repeated legal source titles and citation tags
+  // Remove table of contents and structural instruction titles
+  cleaned = cleaned.replace(/\(\d*\s*True\/False\s*questions[^\)]*\)/gi, '');
+  cleaned = cleaned.replace(/\d\.\s*Non-Lawyer Client Takeaways[^\.\n]*/gi, '');
+  cleaned = cleaned.replace(/\d\.\s*Primary Legal Grounding[^\.\n]*/gi, '');
   cleaned = cleaned.replace(/Privacy Management Programme for the medical industry\.?/gi, '');
   cleaned = cleaned.replace(/Deacons:\s*Data protection[^\.]*\.?/gi, '');
   cleaned = cleaned.replace(/CHAPTER 9 Confidential Information[^\.]*\.?/gi, '');
   cleaned = cleaned.replace(/TERMINATION OF CONTRACT WITHOUT NOTICE BY EMPLOYER,?\s*s?\s*9\.?/gi, '');
   cleaned = cleaned.replace(/\(HK\)\s+Chapter\s+\d+[\s\S]*?(?=\.|\n|$)/gi, '');
-  // Clean double spaces and stray periods
+  // Clean up double whitespaces and empty punctuation
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/\.\s*\./g, '.').trim();
   return cleaned;
 }
@@ -242,7 +245,6 @@ if (!rawText) {
   return;
 }
 
-// Preserve raw text for the Grounding box before cleaning
 let fullRawText = rawText;
 
 // 1. Cut platform footers
@@ -250,51 +252,64 @@ if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
 
-// 2. Strict RegEx extraction of the 5 Core Sections
+// Default structured values for Jordan Telehealth Scenario
 let scenarioText = "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to a personal, unapproved cloud drive to finish work over the weekend.";
 let grossText = "Jordan's action constitutes a serious breach of DPP4 (failure to safeguard personal data) and DPP3 (unauthorized use/disclosure without patient consent). Mass transfer of sensitive medical records to unsecured external storage creates material security exposure.";
 let minorText = "Jordan may argue that the data transfer was an inadvertent technical oversight or work-from-home administrative convenience rather than willful misconduct. However, given strict medical privacy obligations, this defense is unlikely to succeed.";
-let q1Text = "Q1: DPP4 under Cap. 486 requires healthcare staff to safeguard personal data regardless of work-from-home status? (TRUE)";
-let q2Text = "Q2: Transferring unencrypted patient data to a personal cloud drive does not constitute a breach if deleted later? (FALSE)";
-let clientText = "• Mandatory Data Safeguards: Healthcare workers must adhere to DPP4 security guidelines even when working remotely.\n• Unapproved Cloud Usage: Transferring sensitive records to personal drives constitutes a serious breach under Cap. 486.\n• Summary Dismissal Risk: Breaches of patient confidentiality satisfy immediate termination criteria under Cap. 57 s.9.";
+let q1Text = "Q1: DPP4 under Cap. 486 requires healthcare staff to ensure all practicable steps are taken to safeguard personal data, regardless of whether work-from-home is permitted. (Answer: True)";
+let q2Text = "Q2: Transferring unencrypted patient data to a personal cloud drive, even with no intention to disclose it to third parties, does not constitute a breach if the data is eventually deleted. (Answer: False)";
+let clientText = "• Threshold Rule: Mass unauthorized transfer of unencrypted health data meets the high threshold for summary dismissal under Cap. 57 s.9.\n• Mistakes vs. Breaches: Unintentional privacy breaches involving patient records carry severe legal risk regardless of intent.\n• Key Action Item: Healthcare workers must strictly use authorized enterprise channels for remote medical record processing.";
 
 // Extract Section 1 (Scenario)
-let sec1Match = rawText.match(/1\.\s*The Scenario Card([\s\S]*?)(?=Legal Assessment:|2\.\s*The Verdict|High Risk)/i);
+let sec1Match = rawText.match(/(?:1\.\s*The Scenario Card|Incident:)([\s\S]*?)(?=2\.\s*The Verdict|Legal Assessment:|High-Threshold)/i);
 if (sec1Match) {
   let cleaned = cleanCardText(sec1Match[1]);
   if (cleaned.length > 20) scenarioText = cleaned;
 }
 
 // Extract Section 2 (High Risk Verdict)
-let grossMatch = rawText.match(/(Legal Assessment:\s*High Risk \/ Repudiatory Breach|High-Threshold Violation)([\s\S]*?)(?=Legal Assessment:\s*Minor|Low-Threshold|✔|\d\.\s*Clinical Exercise)/i);
+let grossMatch = rawText.match(/(?:High-Threshold Violation|Legal Assessment:\s*High Risk)([\s\S]*?)(?=Low-Threshold Defence|Legal Assessment:\s*Minor|✔|\d\.\s*Clinical Exercise)/i);
 if (grossMatch) {
-  let cleaned = cleanCardText(grossMatch[2]);
+  let cleaned = cleanCardText(grossMatch[1]);
   if (cleaned.length > 20) grossText = cleaned;
 }
 
 // Extract Section 2 (Minor Error Verdict)
-let minorMatch = rawText.match(/(Legal Assessment:\s*Minor \/ Non-Repudiatory Error|Low-Threshold Defen[sc]e)([\s\S]*?)(?=✔|\d\.\s*Clinical Exercise|Non-Lawyer Client Takeaways|LexisNexis Primary Legal Grounding)/i);
+let minorMatch = rawText.match(/(?:Low-Threshold Defence|Legal Assessment:\s*Minor)([\s\S]*?)(?=✔|\d\.\s*Clinical Exercise|Clinical Exercise|Non-Lawyer Client Takeaways|Primary Legal Grounding)/i);
 if (minorMatch) {
-  let cleaned = cleanCardText(minorMatch[2]);
+  let cleaned = cleanCardText(minorMatch[1]);
   if (cleaned.length > 20) minorText = cleaned;
 }
 
-// Extract Section 3 (Clinical Exercise Quiz)
-let exerciseMatch = rawText.match(/(✔|\d\.\s*)?Clinical Exercise[\s\S]*?(?=LexisNexis Primary Legal Grounding|Statutory Clauses:|$)/i);
-if (exerciseMatch) {
-  let quizText = exerciseMatch[0];
-  if (quizText.includes("Q2:")) {
-    let parts = quizText.split(/2\.\s*Q2:|Q2:/i);
-    let q1Part = parts[0].replace(/.*Clinical Exercise.*?\n?/i, '').replace(/1\.\s*/g, '').trim();
-    q1Text = cleanCardText(q1Part);
+// Extract Section 3 (Clinical Exercise Quiz Questions)
+if (rawText.toLowerCase().includes("q1:") && rawText.toLowerCase().includes("q2:")) {
+  let q1Match = rawText.match(/Q1:[\s\S]*?(?=2\.\s*Q2:|Q2:)/i);
+  let q2Match = rawText.match(/Q2:[\s\S]*?(?=4\.\s*Non-Lawyer|Non-Lawyer Client Takeaways|Primary Legal Grounding|Statutory Clauses:|$)/i);
+  
+  if (q1Match) {
+    let rawQ1 = q1Match[0].replace(/Answer:\s*True\.?/i, '(Answer: True)').trim();
+    q1Text = cleanCardText(rawQ1);
     if (!q1Text.toLowerCase().startsWith("q1:")) q1Text = "Q1: " + q1Text;
-    
-    let q2Part = parts[1].split(/\n/)[0].trim();
-    q2Text = "Q2: " + cleanCardText(q2Part);
+  }
+  if (q2Match) {
+    let rawQ2 = q2Match[0].replace(/Answer:\s*False\.?/i, '(Answer: False)').trim();
+    q2Text = cleanCardText(rawQ2);
+    if (!q2Text.toLowerCase().startsWith("q2:")) q2Text = "Q2: " + q2Text;
+    if (!q2Text.toLowerCase().includes("answer:")) q2Text += " (Answer: False)";
   }
 }
 
-// Extract Section 5 (Primary Legal Grounding & Citations)
+// Extract Section 4 (Client Takeaways)
+let clientMatch = rawText.match(/(?:Non-Lawyer Client Takeaways|4\.\s*Non-Lawyer Client Takeaways)([\s\S]*?)(?=5\.\s*Primary Legal Grounding|Primary Legal Grounding|Statutory Clauses:|$)/i);
+if (clientMatch) {
+  let rawClient = clientMatch[1].trim();
+  let items = rawClient.split("\n").map(l => cleanCardText(l)).filter(l => l.length > 10);
+  if (items.length > 0) {
+    clientText = items.map(item => item.startsWith("•") ? item : "• " + item).join("\n");
+  }
+}
+
+// Extract Section 5 (Primary Legal Grounding & Pinpointing)
 let authorityText = fullRawText;
 if (fullRawText.includes("LexisNexis Primary Legal Grounding")) {
   authorityText = fullRawText.split("LexisNexis Primary Legal Grounding")[1].trim();
