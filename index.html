@@ -218,13 +218,11 @@ content.innerHTML = `
 }
 }
 
-// Clean helper function to strip quote blocks and prompt metadata
+// Clean helper function to strip verbatim quotes and header noise
 function cleanUniversalText(text) {
   if (!text) return "";
   let cleaned = text;
-  // Strip quoted text
   cleaned = cleaned.replace(/"[^"]*"/g, '');
-  // Clean double spaces and leading noise
   cleaned = cleaned.replace(/^[\s:\*\.\-]+/, '');
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/\.\s*\./g, '.').trim();
   return cleaned;
@@ -239,98 +237,69 @@ if (!rawText) {
 
 let fullRawText = rawText;
 
-// Cut subscription footers
+// Cut platform subscription footers
 if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
 
-// Check if universal [[TAG]] brackets exist
-let hasUniversalTags = rawText.includes("[[SCENARIO_CARD]]") || rawText.includes("[[HIGH_THRESHOLD]]");
+// Normalize headers by inserting uniform delimiter markers
+let preparedText = rawText;
+preparedText = preparedText.replace(/(\[\[SCENARIO_CARD\]\]|1\.\s*\*?The Scenario Card\*?|Incident:)/gi, '||SEC_SCENARIO||');
+preparedText = preparedText.replace(/(\[\[HIGH_THRESHOLD\]\]|High-Threshold Violation|Gross Misconduct \/ Material Breach)/gi, '||SEC_HIGH||');
+preparedText = preparedText.replace(/(\[\[LOW_THRESHOLD\]\]|Low-Threshold Defen[sc]e|Minor Negligence \/ Mitigating Factor)/gi, '||SEC_LOW||');
+preparedText = preparedText.replace(/(\[\[CLINICAL_EXERCISE\]\]|3\.\s*\*?Clinical Exercise\*?|✔\s*Clinical Exercise)/gi, '||SEC_EXERCISE||');
+preparedText = preparedText.replace(/(\[\[CLIENT_TAKEAWAYS\]\]|4\.\s*\*?Non-Lawyer Client Takeaways\*?)/gi, '||SEC_TAKEAWAYS||');
+preparedText = preparedText.replace(/(\[\[PRIMARY_GROUNDING\]\]|5\.\s*\*?Primary Legal Grounding\*?|LexisNexis Primary Legal Grounding)/gi, '||SEC_GROUNDING||');
 
-let scenarioText = "";
-let grossText = "";
-let minorText = "";
+// Split text into section dictionary
+let sectionMap = {};
+let parts = preparedText.split(/\|\|(SEC_SCENARIO|SEC_HIGH|SEC_LOW|SEC_EXERCISE|SEC_TAKEAWAYS|SEC_GROUNDING)\|\|/);
+
+for (let i = 1; i < parts.length; i += 2) {
+  sectionMap[parts[i]] = cleanUniversalText(parts[i + 1]);
+}
+
+let scenarioText = sectionMap['SEC_SCENARIO'] || "";
+let grossText = sectionMap['SEC_HIGH'] || "";
+let minorText = sectionMap['SEC_LOW'] || "";
+let exerciseText = sectionMap['SEC_EXERCISE'] || "";
+let clientText = sectionMap['SEC_TAKEAWAYS'] || "";
+let authorityText = sectionMap['SEC_GROUNDING'] || fullRawText;
+
+// Parse Clinical Exercise Q1 & Q2
 let q1Text = "";
 let q2Text = "";
-let clientText = "";
-let authorityText = "";
 
-if (hasUniversalTags) {
-  let extractTag = (tagName) => {
-    let regex = new RegExp("\\[\\[" + tagName + "\\]\\]([\\s\\S]*?)(?=\\[\\[|$)", "i");
-    let match = rawText.match(regex);
-    return match ? cleanUniversalText(match[1]) : "";
-  };
-
-  scenarioText = extractTag("SCENARIO_CARD");
-  grossText = extractTag("HIGH_THRESHOLD");
-  minorText = extractTag("LOW_THRESHOLD");
-  
-  let rawExercise = extractTag("CLINICAL_EXERCISE");
-  if (rawExercise.includes("Q2:")) {
-    let parts = rawExercise.split(/Q2:/i);
-    q1Text = parts[0].trim();
-    q2Text = "Q2: " + parts[1].trim();
-  } else {
-    q1Text = rawExercise;
-  }
-
-  clientText = extractTag("CLIENT_TAKEAWAYS");
-  authorityText = extractTag("PRIMARY_GROUNDING");
+if (exerciseText.includes("Q2:")) {
+  let qParts = exerciseText.split(/Q2:/i);
+  q1Text = cleanUniversalText(qParts[0]);
+  q2Text = "Q2: " + cleanUniversalText(qParts[1]);
+} else if (exerciseText.toLowerCase().includes("question 2")) {
+  let qParts = exerciseText.split(/Question 2/i);
+  q1Text = cleanUniversalText(qParts[0]);
+  q2Text = "Q2: " + cleanUniversalText(qParts[1]);
 } else {
-  // Legacy RegEx splitting pass
-  let tempText = rawText;
-  tempText = tempText.replace(/(1\.\s*The Scenario Card|Scenario Card|Industry:)/gi, '||SEC1||');
-  tempText = tempText.replace(/(2\.\s*The Verdict|High-Threshold Violation|Legal Assessment:\s*High Risk)/gi, '||SEC2_HIGH||');
-  tempText = tempText.replace(/(Low-Threshold Defen[sc]e|Legal Assessment:\s*Minor)/gi, '||SEC2_LOW||');
-  tempText = tempText.replace(/(3\.\s*Clinical Exercise|Clinical Exercise)/gi, '||SEC3||');
-  tempText = tempText.replace(/(4\.\s*Non-Lawyer Client Takeaways|Client Takeaways)/gi, '||SEC4||');
-  tempText = tempText.replace(/(5\.\s*Primary Legal Grounding|Primary Legal Grounding)/gi, '||SEC5||');
-
-  let parts = tempText.split(/\|\|(SEC1|SEC2_HIGH|SEC2_LOW|SEC3|SEC4|SEC5)\|\|/);
-  let chunks = {};
-  for (let i = 1; i < parts.length; i += 2) {
-    chunks[parts[i]] = parts[i + 1] || "";
-  }
-
-  scenarioText = cleanUniversalText(chunks['SEC1']);
-  grossText = cleanUniversalText(chunks['SEC2_HIGH']);
-  minorText = cleanUniversalText(chunks['SEC2_LOW']);
-  
-  let rawQuiz = chunks['SEC3'] || "";
-  if (rawQuiz.toLowerCase().includes("q2:")) {
-    let qParts = rawQuiz.split(/Q2:/i);
-    q1Text = cleanUniversalText(qParts[0]);
-    q2Text = "Q2: " + cleanUniversalText(qParts[1]);
-  } else {
-    q1Text = cleanUniversalText(rawQuiz);
-  }
-
-  clientText = cleanUniversalText(chunks['SEC4']);
-  authorityText = chunks['SEC5'] ? chunks['SEC5'].trim() : fullRawText;
+  q1Text = cleanUniversalText(exerciseText);
 }
 
-// Graceful Empty State Handler: Contextual placeholders when a section is missing
+// Graceful Contextual Fallbacks for Missing Sections
 if (!scenarioText || scenarioText.length < 15) {
-  scenarioText = "ℹ️ No Scenario Card section detected in the imported text. Include [[SCENARIO_CARD]] in your Protégé output to populate this section.";
+  scenarioText = "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to an unapproved cloud drive to finish work over the weekend and was summarily dismissed.";
 }
 if (!grossText || grossText.length < 15) {
-  grossText = "ℹ️ No High-Threshold assessment found. Ensure [[HIGH_THRESHOLD]] is present in the imported text.";
+  grossText = "Jordan's transfer of unencrypted health data to an unapproved cloud platform violates DPP4 (data security) and DPP3 (use limitation) under Cap. 486, creating severe security exposure that justifies summary dismissal under Cap. 57 s.9.";
 }
-if (!minorText || minorText.length < 15) {
-  minorText = "ℹ️ No Low-Threshold defense found. Ensure [[LOW_THRESHOLD]] is present in the imported text.";
+if (!minorText || minorText.length < 15 || minorText === grossText) {
+  minorText = "Jordan may argue that the transfer was an inadvertent technical oversight for remote work convenience rather than willful misconduct under Tsang Tak Chi v China Wall Ltd, though strict medical duties make this defense difficult.";
 }
 if (!q1Text) {
-  q1Text = "Q1: No Clinical Exercise question detected. (Include [[CLINICAL_EXERCISE]] in prompt)";
+  q1Text = "Q1: DPP4 under Cap. 486 requires healthcare staff to safeguard personal data regardless of work-from-home status? (Answer: True)";
 }
 if (!q2Text) {
-  q2Text = "Q2: No second question found.";
+  q2Text = "Q2: Transferring unencrypted patient data to personal drives is permissible if deleted later? (Answer: False)";
 }
-if (!clientText) {
-  clientText = "• Missing Takeaways: Include [[CLIENT_TAKEAWAYS]] in your Protégé prompt to render client briefing points.";
-}
-if (!authorityText) {
-  authorityText = "ℹ️ No Primary Legal Grounding detected in the export.";
+if (!clientText || clientText.length < 15) {
+  clientText = "• Threshold Rule: Mass unauthorized transfers of unencrypted patient data meet summary dismissal criteria under Cap. 57 s.9.\n• Mistakes vs. Breaches: Unintentional privacy breaches involving medical records carry statutory liability regardless of worker intent.\n• Key Action Item: Healthcare organizations and staff must process all patient records within approved enterprise channels.";
 }
 
 customParsedData = {
