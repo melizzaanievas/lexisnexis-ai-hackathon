@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Protégé: Scenario-to-Authority Educational Engine</title>
+
+<!-- PptxGenJS Library for Client-Side Editable PPTX / Google Slides Generation -->
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
 <style>
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f4f6f8; color: #333; }
 .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -17,6 +21,8 @@ button:hover { background: #002244; }
 .btn-secondary:hover { background: #1a202c; }
 .btn-slides { background: #0f9d58; }
 .btn-slides:hover { background: #0b8043; }
+.btn-pptx { background: #d93025; }
+.btn-pptx:hover { background: #a50e0e; }
 .card { background: #eef6fc; border-left: 5px solid #0055a5; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
 .grid { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
 .verdict-box { flex: 1; min-width: 280px; padding: 15px; border-radius: 6px; }
@@ -27,9 +33,16 @@ button:hover { background: #002244; }
 .authorities { background: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; font-size: 0.85em; }
 textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; padding: 10px; font-family: inherit; margin-top: 8px; margin-bottom: 10px; }
 
-/* Clean Print Styles for PDF Exports */
+/* Footer Styles */
+.disclaimer-box { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 30px; font-size: 0.85em; color: #555; line-height: 1.5; }
+.disclaimer-title { font-weight: bold; color: #d46b08; margin-bottom: 5px; }
+.footer { margin-top: 25px; padding-top: 15px; border-top: 1px solid #e8e8e8; text-align: center; font-size: 0.85em; color: #666; line-height: 1.6; }
+.footer a { color: #003366; font-weight: bold; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Clean Print Styles for PDF / Slide Exports */
 @media print {
-  .controls, .bridge-box, button, textarea { display: none !important; }
+  .controls, .bridge-box, button, textarea, .disclaimer-box, .footer { display: none !important; }
   body { background: #fff; margin: 0; }
   .container { box-shadow: none; max-width: 100%; padding: 0; }
   .card, .grid, .exercise { page-break-inside: avoid; }
@@ -68,7 +81,8 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 </div>
 
 <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-<button onclick="generateGoogleSlides()" class="btn-slides">✨ Generate Editable Google Slides Deck</button>
+<button onclick="downloadEditablePowerPoint()" class="btn-pptx">📊 Download Editable Slides (.pptx)</button>
+<button onclick="generateGoogleSlides()" class="btn-slides">✨ Google Slides Engine</button>
 <button onclick="window.print()">🖨️ Print / Export PDF</button>
 <button onclick="copySlideOutline()" class="btn-secondary">📋 Copy Outline</button>
 </div>
@@ -84,6 +98,20 @@ Cross-Domain Anchors Verified:
  - Personal Data (Privacy) Ordinance (Cap. 486) Schedule 1, DPP4(1)
  - Sale of Goods Ordinance (Cap. 26) Section 12(1)
 </div>
+
+<!-- Legal Terms & Conditions Disclaimer -->
+<div class="disclaimer-box">
+<div class="disclaimer-title">⚠️ Terms & Conditions & AI Legal Disclaimer</div>
+This dashboard is an educational research tool powered by LexisNexis Protégé and generative AI models. Outputs do not constitute formal legal advice. Lawyers, legal practitioners, and users must independently verify all statutory provisions, case law citations, and legal analyses prior to professional or judicial reliance. The developers and providers disclaim all legal responsibility for actions taken based on generated content.
+</div>
+
+<!-- Footer with Product Link & Author Credits -->
+<div class="footer">
+🔍 Explore <b><a href="https://www.lexisnexis.com/" target="_blank">LexisNexis Protégé</a></b> for enterprise legal research.<br>
+🚀 Developed by <b>Melizza Anievas</b> for the <b>LexisNexis AI Hackathon 2026</b>.<br>
+🔗 Connect with Melizza: <a href="https://github.com/melizzaanievas" target="_blank">GitHub</a> | <a href="https://www.linkedin.com/in/melizza-anievas/" target="_blank">LinkedIn</a>
+</div>
+
 </div>
 
 <script>
@@ -155,11 +183,43 @@ content.innerHTML = `
 }
 }
 
+function downloadEditablePowerPoint() {
+const topic = document.getElementById('topicSelect').value;
+const data = scenarios[topic] || scenarios.cloud;
+
+let pptx = new PptxGenJS();
+pptx.layout = 'LAYOUT_16x9';
+
+// Slide 1: Title & Overview
+let slide1 = pptx.addSlide();
+slide1.background = { color: "F4F6F8" };
+slide1.addText(data.title, { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 22, bold: true, color: "003366" });
+slide1.addText(data.story, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
+
+// Slide 2: Dual Verdict Analysis
+let slide2 = pptx.addSlide();
+slide2.addText("Dual-Verdict Legal Analysis (Cap. 57 s.9 vs Tsang Tak Chi)", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide2.addText("⚖️ Gross Misconduct\n\n" + data.gross, { x: 0.5, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "9B1C1C", fill: { color: "FDF2F2" }, inset: 0.3 });
+slide2.addText("⚖️ Minor Negligence\n\n" + data.minor, { x: 5.2, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "8A5340", fill: { color: "FEF8EC" }, inset: 0.3 });
+
+// Slide 3: Client Takeaways
+let slide3 = pptx.addSlide();
+slide3.addText("📢 Non-Lawyer Stakeholder & Client Takeaways", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide3.addText(data.client, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "166534", fill: { color: "F0FDF4" }, inset: 0.3 });
+
+// Slide 4: Clinical Exercise
+let slide4 = pptx.addSlide();
+slide4.addText("📝 University Legal Clinic Exercise", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide4.addText("1. " + data.q1 + "\n\n2. " + data.q2, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
+
+// Save the editable file
+pptx.writeFile({ fileName: `Protege_Briefing_${topic}.pptx` });
+}
+
 function generateGoogleSlides() {
 const topic = document.getElementById('topicSelect').value;
 const data = scenarios[topic] || scenarios.cloud;
 
-// Paste your Google Apps Script Web App URL below:
 const webAppUrl = "https://script.google.com/macros/s/AKfycbwKg-6XCI4U02Vhgu6QYKzbrxZUHnmfJQop_GqGYKo3giV9iUXmxVjCGVPpA6Vd5-vO/exec";
 
 if (webAppUrl === "https://script.google.com/macros/s/AKfycbwKg-6XCI4U02Vhgu6QYKzbrxZUHnmfJQop_GqGYKo3giV9iUXmxVjCGVPpA6Vd5-vO/exec") {
