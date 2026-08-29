@@ -59,11 +59,15 @@ The **Scenario-to-Authority Educational Engine** bridges the gap between high-pr
     └── disclaimer_and_slide_export.md   # Compliance, disclaimers & creator credits
 ```
 
-🌐 Live Web Dashboard & Slide Generator Try the live interactive dashboard:
+----
+
+## 🌐 Live Web Dashboard & Slide Generator Try the live interactive dashboard:
 
 👉 [https://melizzaanievas.github.io/lexisnexis-ai-hackathon/](https://melizzaanievas.github.io/lexisnexis-ai-hackathon/)
 
-How to Use the Live Dashboard: Select a pre-loaded industry scenario (Finance, Hospitality, or Logistics).
+---
+
+## How to Use the Live Dashboard: Select a pre-loaded industry scenario (Finance, Hospitality, or Logistics).
 
 Switch between University Legal Clinic View and Non-Lawyer Client View.
 
@@ -72,6 +76,8 @@ Use the Protégé Word/**PDF** Live Ingestion Bridge to paste text exported from
 Click 📊 Download Editable Slides (.pptx) to download a presentation deck that opens directly in Google Slides or PowerPoint.
 
 ⚠️ Legal AI Disclaimer & Terms of Use This dashboard is an educational research tool powered by LexisNexis Protégé and generative AI models. Outputs do not constitute formal legal advice. Lawyers, legal practitioners, and users must independently verify all statutory provisions, case law citations, and legal analyses prior to professional or judicial reliance. The developers and providers disclaim all legal responsibility for actions taken based on generated content.
+
+---
 
 👤 Author & Acknowledgments Developer: Melizza Anievas ([GitHub](https://github.com/melizzaanievas) | [LinkedIn](https://www.linkedin.com/in/melizza-anievas/))  
 
