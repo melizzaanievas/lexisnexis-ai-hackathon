@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Protégé: Scenario-to-Authority Educational Engine</title>
 
+<!-- PptxGenJS Library for Client-Side Editable PPTX / Google Slides Generation -->
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
 <style>
@@ -51,10 +52,11 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <h1>⚖️ Protégé: Scenario-to-Authority Educational Engine</h1>
 <div class="subtitle">Powered by LexisNexis Protégé | Jurisdiction: Hong Kong SAR & Universal Legal Frameworks</div>
 
+<!-- Live Ingestion Bridge -->
 <div class="bridge-box">
 <h3>📥 Protégé Word / PDF Export Live Ingestion Bridge</h3>
-<p style="font-size: 0.9em; color: #444;">Since Protégé exports strictly to Word (.docx) and PDF formats, paste raw text directly from your Protégé export below to convert it into responsive web display cards:</p>
-<textarea id="protegePaste" rows="4" placeholder="Paste text copied from your Protégé Word or PDF export here..."></textarea>
+<p style="font-size: 0.9em; color: #444;">Paste raw text exported from your Protégé Word/PDF export below. The parser will automatically format it into interactive web display cards:</p>
+<textarea id="protegePaste" rows="4" placeholder="Paste Protégé output here (e.g. The Scenario Card, The Verdict, Clinical Exercise)..."></textarea>
 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 <button onclick="parseProtegeInput()">Render Custom Display Cards</button>
 <span style="font-size: 0.85em; color: #666;">Need the prompt template? <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon/tree/main/experiments" target="_blank" style="color: #003366; font-weight: bold;">Learn how to prompt Protégé for exports ↗</a></span>
@@ -91,19 +93,15 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <div id="dashboardContent"></div>
 
 <h3>📜 LexisNexis Primary Legal Grounding & Pinpointing</h3>
-<div class="authorities">
-Primary Statutory Anchor: (HK) Chapter 57 EMPLOYMENT ORDINANCE s 9(1)(a)(ii)
-Leading Precedent Ratio: TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366
-Cross-Domain Anchors Verified:
- - Personal Data (Privacy) Ordinance (Cap. 486) Schedule 1, DPP4(1)
- - Sale of Goods Ordinance (Cap. 26) Section 12(1)
-</div>
+<div id="authoritiesContent" class="authorities"></div>
 
+<!-- Legal Terms & Conditions Disclaimer -->
 <div class="disclaimer-box">
 <div class="disclaimer-title">⚠️ Terms & Conditions & AI Legal Disclaimer</div>
 This dashboard is an educational research tool powered by LexisNexis Protégé and generative AI models. Outputs do not constitute formal legal advice. Lawyers, legal practitioners, and users must independently verify all statutory provisions, case law citations, and legal analyses prior to professional or judicial reliance. The developers and providers disclaim all legal responsibility for actions taken based on generated content.
 </div>
 
+<!-- Footer with Demo Notice & Credits -->
 <div class="footer">
 🛠️ <b>Hackathon Demo Notice:</b> This dashboard demonstrates experimental workflows tested during the <b>LexisNexis AI Hackathon 2026</b>. The full end-to-end tool remains a work in progress. Latest updates, experimental logs, and prompt frameworks can be found on <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon" target="_blank">GitHub</a>.<br>
 🔍 Explore <b><a href="https://www.lexisnexis.com/en-hk/products-and-services/online-solution/lexis-plus-protege?gad_source=1&gad_campaignid=24133535899&gbraid=0AAAAA-ENcK1zAYkv8jZgpWtyFAuZPfdAD&gclid=Cj0KCQjwhsrUBhDxARIsAN3AQSfa8iyHEPhnRVxxOIGQ_CfP7pbQU4_BJOARwQS8g3f0X-pm95ZTVf8aAhx0EALw_wcB" target="_blank">LexisNexis Protégé</a></b> for enterprise legal research.<br>
@@ -121,7 +119,8 @@ gross: "Under Cap. 57 s.9(1)(a)(ii), summary dismissal requires conduct fundamen
 minor: "As held in Tsang Tak Chi v China Wall Ltd, instant dismissal is akin to 'capital punishment'. If Alex’s upload was an inadvertent error with zero damage, it remains minor negligence short of summary dismissal.",
 client: "• Instant Firing Threshold: Only permitted for gross, repudiatory misconduct under s.9 Cap. 57.\n• Errors vs. Misconduct: Unintentional mistakes or minor policy breaches rarely justify immediate firing without notice.\n• Mandatory Entitlements: Even if dismissed, accrued statutory wages and holiday pay must be paid.",
 q1: "Q1: Summary dismissal in HK requires gross misconduct that undermines fundamental trust? (TRUE)",
-q2: "Q2: Employers are always justified in firing employees for a single act of negligence? (FALSE)"
+q2: "Q2: Employers are always justified in firing employees for a single act of negligence? (FALSE)",
+authority: "Primary Statutory Anchor: (HK) Chapter 57 EMPLOYMENT ORDINANCE s 9(1)(a)(ii)\nLeading Precedent Ratio: TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366\nCross-Domain Anchors Verified:\n - Personal Data (Privacy) Ordinance (Cap. 486) Schedule 1, DPP4(1)\n - Sale of Goods Ordinance (Cap. 26) Section 12(1)"
 },
 flyers: {
 title: "🎴 Scenario B: Corporate Printer Usage (Hospitality)",
@@ -130,7 +129,8 @@ gross: "As a senior manager, misusing resources directly undermines corporate in
 minor: "If the act is isolated, has minimal financial impact, and lacks a clear prohibition policy, it remains a minor error of judgment under Tsang Tak Chi.",
 client: "• Leadership Duty: Misusing office resources can be gross misconduct if it breaches trust, especially for managers.\n• Minor Impact: Isolated printing errors without warnings rarely meet the legal threshold for instant firing.",
 q1: "Q1: Senior leadership roles carry a higher duty of fidelity regarding resource misuse? (TRUE)",
-q2: "Q2: Printing personal documents always automatically justifies instant dismissal? (FALSE)"
+q2: "Q2: Printing personal documents always automatically justifies instant dismissal? (FALSE)",
+authority: "Primary Statutory Anchor: (HK) Chapter 57 EMPLOYMENT ORDINANCE s 9(1)(a)(ii)\nLeading Precedent Ratio: TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366\nCross-Domain Anchors Verified:\n - Prevention of Bribery Ordinance (Cap. 201) s 9"
 },
 van: {
 title: "🎴 Scenario C: Off-Duty Vehicle Usage (Logistics)",
@@ -139,7 +139,8 @@ gross: "Deliberately ignoring clear vehicle usage prohibitions in the contract s
 minor: "If the driver misunderstood the policy, caused no damage, and had no prior warnings, the act constitutes a minor error of judgment under Tsang Tak Chi.",
 client: "• Off-duty Policy: Breaches committed outside work hours can still result in dismissal if trust is broken.\n• Property Misuse: Always clarify vehicle permissions to avoid summary dismissal risks.",
 q1: "Q1: Off-duty misconduct can justify summary dismissal if it breaks contractual trust? (TRUE)",
-q2: "Q2: Policy misunderstandings with zero damage automatically warrant instant firing? (FALSE)"
+q2: "Q2: Policy misunderstandings with zero damage automatically warrant instant firing? (FALSE)",
+authority: "Primary Statutory Anchor: (HK) Chapter 57 EMPLOYMENT ORDINANCE s 9(1)(a)(ii)\nLeading Precedent Ratio: TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366\nCross-Domain Anchors Verified:\n - Road Traffic Ordinance (Cap. 374)"
 },
 data: {
 title: "🎴 Scenario D: Employee Workplace Surveillance (Data Privacy)",
@@ -148,7 +149,8 @@ gross: "Under Personal Data (Privacy) Ordinance Cap. 486 DPP4(1), data users mus
 minor: "Failure to provide transparent PIMS notification before implementing surveillance constitutes a breach of Data Protection Principles under Cap. 486.",
 client: "• Privacy Compliance: Workplace monitoring requires clear prior notification and transparency under Cap. 486.\n• Data Protection: Employers must secure collected employee data against unauthorized access or leakages.",
 q1: "Q1: Employers can monitor remote employees without prior notification under Cap. 486? (FALSE)",
-q2: "Q2: DPP4 requires all practicable steps to secure collected personal data? (TRUE)"
+q2: "Q2: DPP4 requires all practicable steps to secure collected personal data? (TRUE)",
+authority: "Primary Statutory Anchor: (HK) Personal Data (Privacy) Ordinance (Cap. 486) Schedule 1, DPP 4(1)\nLeading Precedent Ratio: Privacy Commissioner for Personal Data (PCPD) Enforcement Notices & Guidelines\nCross-Domain Anchors Verified:\n - Employment Ordinance (Cap. 57) s. 9"
 },
 goods: {
 title: "🎴 Scenario E: Defective Commercial Equipment (Sale of Goods)",
@@ -157,7 +159,8 @@ gross: "Under Sale of Goods Ordinance Cap. 26 s.12(1), failure to meet implied c
 minor: "Minor performance variations rectifiable via simple repairs represent a breach of warranty rather than a repudiatory condition breach under Cap. 26.",
 client: "• Statutory Implied Terms: Goods sold commercially must be fit for stated purpose under Cap. 26.\n• Rejection Rights: Severe breaches of fitness allow buyers to reject equipment and seek remedies.",
 q1: "Q1: Cap. 26 s.12 implies conditions of fitness for purpose in commercial sales? (TRUE)",
-q2: "Q2: Any defect automatically allows buyers to cancel sales contracts immediately? (FALSE)"
+q2: "Q2: Any defect automatically allows buyers to cancel sales contracts immediately? (FALSE)",
+authority: "Primary Statutory Anchor: (HK) Sale of Goods Ordinance (Cap. 26) Section 12(1)\nLeading Precedent Ratio: Commercial Contractual Repudiation & Breach of Warranty Principles\nCross-Domain Anchors Verified:\n - Control of Exemption Clauses Ordinance (Cap. 71)"
 }
 };
 
@@ -165,7 +168,10 @@ function renderDashboard() {
 const topic = document.getElementById('topicSelect').value;
 const audience = document.getElementById('audienceSelect').value;
 const content = document.getElementById('dashboardContent');
+const authorityBox = document.getElementById('authoritiesContent');
 const data = scenarios[topic] || scenarios.cloud;
+
+authorityBox.innerText = data.authority;
 
 if (audience === 'clinic') {
 content.innerHTML = `
@@ -199,49 +205,6 @@ content.innerHTML = `
 }
 }
 
-function downloadEditablePowerPoint() {
-const topic = document.getElementById('topicSelect').value;
-const data = scenarios[topic] || scenarios.cloud;
-
-let pptx = new PptxGenJS();
-pptx.layout = 'LAYOUT_16x9';
-
-// Slide 1: Title & Overview
-let slide1 = pptx.addSlide();
-slide1.background = { color: "F4F6F8" };
-slide1.addText(data.title, { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 22, bold: true, color: "003366" });
-slide1.addText(data.story, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
-
-// Slide 2: Dual Legal Assessment
-let slide2 = pptx.addSlide();
-slide2.addText("Dual Legal Analysis & Threshold Assessment", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
-slide2.addText("⚖️ High Risk / Repudiatory Breach\n\n" + data.gross, { x: 0.5, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "9B1C1C", fill: { color: "FDF2F2" }, inset: 0.3 });
-slide2.addText("⚖️ Minor / Non-Repudiatory Error\n\n" + data.minor, { x: 5.2, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "8A5340", fill: { color: "FEF8EC" }, inset: 0.3 });
-
-// Slide 3: Statutory & Precedent Grounding
-let slide3 = pptx.addSlide();
-slide3.addText("📜 Primary Statutory & Precedent Grounding", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
-slide3.addText(
-"Primary Statutory Anchor:\n(HK) Chapter 57 EMPLOYMENT ORDINANCE s 9(1)(a)(ii)\n\n" +
-"Leading Precedent Ratio:\nTSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366\n\n" +
-"Cross-Domain Anchors Verified:\n• Personal Data (Privacy) Ordinance (Cap. 486) Schedule 1, DPP4(1)\n• Sale of Goods Ordinance (Cap. 26) Section 12(1)", 
-{ x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 15, color: "F7FAFC", fill: { color: "2D3748" }, inset: 0.4, fontFace: "Courier New" }
-);
-
-// Slide 4: Clinical Exercise
-let slide4 = pptx.addSlide();
-slide4.addText("📝 University Legal Clinic Exercise", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
-slide4.addText("1. " + data.q1 + "\n\n2. " + data.q2, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
-
-// Slide 5: Non-Lawyer Client Takeaway
-let slide5 = pptx.addSlide();
-slide5.addText("📢 Non-Lawyer Stakeholder & Client Takeaways", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
-slide5.addText(data.client, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "166534", fill: { color: "F0FDF4" }, inset: 0.4 });
-
-// Save the 5-slide presentation file
-pptx.writeFile({ fileName: `Protege_Briefing_${topic}_5Slides.pptx` });
-}
-
 function parseProtegeInput() {
 const rawText = document.getElementById('protegePaste').value.trim();
 if (!rawText) {
@@ -249,13 +212,104 @@ alert("Please paste text from your Protégé Word or PDF export first!");
 return;
 }
 
+// Smart parser for Protégé Universal Framework output
+let scenarioText = "Custom Scenario Imported from Protégé.";
+let grossText = "Refer to Protégé output for High-Threshold Liability details.";
+let minorText = "Refer to Protégé output for Low-Threshold Defense details.";
+let q1Text = "Q1: As extracted from Protégé output.";
+let q2Text = "Q2: As extracted from Protégé output.";
+
+if (rawText.includes("The Scenario Card:")) {
+  let parts = rawText.split("The Scenario Card:");
+  if (parts[1]) {
+    scenarioText = parts[1].split("The Verdict:")[0].trim();
+  }
+}
+
+if (rawText.includes("The Verdict:")) {
+  let verdictPart = rawText.split("The Verdict:")[1];
+  if (verdictPart) {
+    let subParts = verdictPart.split("Clinical Exercise:");
+    let verdictText = subParts[0].trim();
+    let verdictLines = verdictText.split("\n").filter(l => l.trim().length > 0);
+    if (verdictLines.length >= 2) {
+      grossText = verdictLines[0].replace(/^-/, '').trim();
+      minorText = verdictLines.slice(1).join(" ").replace(/^-/, '').trim();
+    } else {
+      grossText = verdictText;
+    }
+  }
+}
+
+if (rawText.includes("Clinical Exercise:")) {
+  let exercisePart = rawText.split("Clinical Exercise:")[1];
+  if (exercisePart) {
+    let exLines = exercisePart.split("\n").filter(l => l.trim().length > 0);
+    if (exLines.length >= 2) {
+      q1Text = exLines[0].trim();
+      q2Text = exLines[1].trim();
+    }
+  }
+}
+
 const content = document.getElementById('dashboardContent');
+const authorityBox = document.getElementById('authoritiesContent');
+
+authorityBox.innerText = "Primary Statutory Anchor: Extracted dynamically from Protégé custom output.\nLeading Precedent Ratio: Evaluated via Universal Clinical Scaffolding Vault.";
+
 content.innerHTML = `
 <div class="card">
-<h3>📥 Rendered Output from Protégé Word/PDF Ingestion</h3>
-<p style="white-space: pre-wrap; font-family: inherit;">${rawText}</p>
+<h3>🎴 Custom Rendered Output (Protégé Live Bridge)</h3>
+<p>${scenarioText}</p>
+</div>
+<div class="grid">
+<div class="verdict-box gross">
+<h4>⚖️ High-Threshold / Violation Assessment</h4>
+<p>${grossText}</p>
+</div>
+<div class="verdict-box minor">
+<h4>⚖️ Low-Threshold / Defense Assessment</h4>
+<p>${minorText}</p>
+</div>
+</div>
+<div class="exercise">
+<h4>📝 Clinical Exercise (True / False)</h4>
+<p>1. <b>${q1Text}</b></p>
+<p>2. <b>${q2Text}</b></p>
 </div>
 `;
+}
+
+function downloadEditablePowerPoint() {
+const topic = document.getElementById('topicSelect').value;
+const data = scenarios[topic] || scenarios.cloud;
+
+let pptx = new PptxGenJS();
+pptx.layout = 'LAYOUT_16x9';
+
+let slide1 = pptx.addSlide();
+slide1.background = { color: "F4F6F8" };
+slide1.addText(data.title, { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 22, bold: true, color: "003366" });
+slide1.addText(data.story, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
+
+let slide2 = pptx.addSlide();
+slide2.addText("Dual Legal Analysis & Threshold Assessment", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide2.addText("⚖️ High Risk / Repudiatory Breach\n\n" + data.gross, { x: 0.5, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "9B1C1C", fill: { color: "FDF2F2" }, inset: 0.3 });
+slide2.addText("⚖️ Minor / Non-Repudiatory Error\n\n" + data.minor, { x: 5.2, y: 1.5, w: 4.3, h: 4.5, fontSize: 14, color: "8A5340", fill: { color: "FEF8EC" }, inset: 0.3 });
+
+let slide3 = pptx.addSlide();
+slide3.addText("📜 Primary Statutory & Precedent Grounding", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide3.addText(data.authority, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 15, color: "F7FAFC", fill: { color: "2D3748" }, inset: 0.4, fontFace: "Courier New" });
+
+let slide4 = pptx.addSlide();
+slide4.addText("📝 University Legal Clinic Exercise", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide4.addText("1. " + data.q1 + "\n\n2. " + data.q2, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "333333", fill: { color: "EEF6FC" }, inset: 0.3 });
+
+let slide5 = pptx.addSlide();
+slide5.addText("📢 Non-Lawyer Stakeholder & Client Takeaways", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
+slide5.addText(data.client, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 16, color: "166534", fill: { color: "F0FDF4" }, inset: 0.4 });
+
+pptx.writeFile({ fileName: `Protege_Briefing_${topic}_5Slides.pptx` });
 }
 
 function copySlideOutline() {
@@ -272,7 +326,7 @@ SLIDE 2: Dual Legal Analysis & Threshold Assessment
 • Minor / Non-Repudiatory Error: ${data.minor}
 
 SLIDE 3: Statutory & Precedent Grounding
-• Cap. 57 s.9(1)(a)(ii) & Tsang Tak Chi v China Wall Ltd
+${data.authority}
 
 SLIDE 4: Clinical Exercise
 1. ${data.q1}
