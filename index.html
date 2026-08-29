@@ -38,7 +38,6 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 .footer a { color: #003366; font-weight: bold; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 
-/* Clean Print Styles for PDF / Slide Exports */
 @media print {
   .controls, .bridge-box, button, textarea, .disclaimer-box, .footer { display: none !important; }
   body { background: #fff; margin: 0; }
@@ -95,13 +94,11 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <h3>📜 LexisNexis Primary Legal Grounding & Pinpointing</h3>
 <div id="authoritiesContent" class="authorities"></div>
 
-<!-- Legal Terms & Conditions Disclaimer -->
 <div class="disclaimer-box">
 <div class="disclaimer-title">⚠️ Terms & Conditions & AI Legal Disclaimer</div>
 This dashboard is an educational research tool powered by LexisNexis Protégé and generative AI models. Outputs do not constitute formal legal advice. Lawyers, legal practitioners, and users must independently verify all statutory provisions, case law citations, and legal analyses prior to professional or judicial reliance. The developers and providers disclaim all legal responsibility for actions taken based on generated content.
 </div>
 
-<!-- Footer with Demo Notice & Credits -->
 <div class="footer">
 🛠️ <b>Hackathon Demo Notice:</b> This dashboard demonstrates experimental workflows tested during the <b>LexisNexis AI Hackathon 2026</b>. The full end-to-end tool remains a work in progress. Latest updates, experimental logs, and prompt frameworks can be found on <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon" target="_blank">GitHub</a>.<br>
 🔍 Explore <b><a href="https://www.lexisnexis.com/en-hk/products-and-services/online-solution/lexis-plus-protege?gad_source=1&gad_campaignid=24133535899&gbraid=0AAAAA-ENcK1zAYkv8jZgpWtyFAuZPfdAD&gclid=Cj0KCQjwhsrUBhDxARIsAN3AQSfa8iyHEPhnRVxxOIGQ_CfP7pbQU4_BJOARwQS8g3f0X-pm95ZTVf8aAhx0EALw_wcB" target="_blank">LexisNexis Protégé</a></b> for enterprise legal research.<br>
@@ -218,11 +215,12 @@ content.innerHTML = `
 }
 }
 
-// Clean helper function to strip verbatim quotes and header noise
+// Universal text cleaner that strips verbatim quote blocks and generic prompt noise
 function cleanUniversalText(text) {
   if (!text) return "";
   let cleaned = text;
   cleaned = cleaned.replace(/"[^"]*"/g, '');
+  cleaned = cleaned.replace(/\[\d*\s*Bullet Points\][,\s]*/gi, '');
   cleaned = cleaned.replace(/^[\s:\*\.\-]+/, '');
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/\.\s*\./g, '.').trim();
   return cleaned;
@@ -237,21 +235,20 @@ if (!rawText) {
 
 let fullRawText = rawText;
 
-// Cut platform subscription footers
+// Cut subscription footers
 if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
 
-// Normalize headers by inserting uniform delimiter markers
+// Tokenize section headers cleanly
 let preparedText = rawText;
-preparedText = preparedText.replace(/(\[\[SCENARIO_CARD\]\]|1\.\s*\*?The Scenario Card\*?|Incident:)/gi, '||SEC_SCENARIO||');
-preparedText = preparedText.replace(/(\[\[HIGH_THRESHOLD\]\]|High-Threshold Violation|Gross Misconduct \/ Material Breach)/gi, '||SEC_HIGH||');
-preparedText = preparedText.replace(/(\[\[LOW_THRESHOLD\]\]|Low-Threshold Defen[sc]e|Minor Negligence \/ Mitigating Factor)/gi, '||SEC_LOW||');
-preparedText = preparedText.replace(/(\[\[CLINICAL_EXERCISE\]\]|3\.\s*\*?Clinical Exercise\*?|✔\s*Clinical Exercise)/gi, '||SEC_EXERCISE||');
-preparedText = preparedText.replace(/(\[\[CLIENT_TAKEAWAYS\]\]|4\.\s*\*?Non-Lawyer Client Takeaways\*?)/gi, '||SEC_TAKEAWAYS||');
-preparedText = preparedText.replace(/(\[\[PRIMARY_GROUNDING\]\]|5\.\s*\*?Primary Legal Grounding\*?|LexisNexis Primary Legal Grounding)/gi, '||SEC_GROUNDING||');
+preparedText = preparedText.replace(/(1\.\s*\*?The Scenario Card\*?|Scenario Card|Industry:)/gi, '||SEC_SCENARIO||');
+preparedText = preparedText.replace(/(2\.\s*\*?The Verdict\*?|High-Threshold Violation|Gross Misconduct \/ Material Breach)/gi, '||SEC_HIGH||');
+preparedText = preparedText.replace(/(Low-Threshold Defen[sc]e|Minor Negligence \/ Mitigating Factor)/gi, '||SEC_LOW||');
+preparedText = preparedText.replace(/(3\.\s*\*?Clinical Exercise\*?|✔\s*Clinical Exercise)/gi, '||SEC_EXERCISE||');
+preparedText = preparedText.replace(/(4\.\s*\*?Non-Lawyer Client Takeaways\*?|Client Takeaways)/gi, '||SEC_TAKEAWAYS||');
+preparedText = preparedText.replace(/(5\.\s*\*?Primary Legal Grounding\*?|LexisNexis Primary Legal Grounding)/gi, '||SEC_GROUNDING||');
 
-// Split text into section dictionary
 let sectionMap = {};
 let parts = preparedText.split(/\|\|(SEC_SCENARIO|SEC_HIGH|SEC_LOW|SEC_EXERCISE|SEC_TAKEAWAYS|SEC_GROUNDING)\|\|/);
 
@@ -282,7 +279,7 @@ if (exerciseText.includes("Q2:")) {
   q1Text = cleanUniversalText(exerciseText);
 }
 
-// Graceful Contextual Fallbacks for Missing Sections
+// Fallback Population if Sections are Empty
 if (!scenarioText || scenarioText.length < 15) {
   scenarioText = "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to an unapproved cloud drive to finish work over the weekend and was summarily dismissed.";
 }
@@ -298,7 +295,7 @@ if (!q1Text) {
 if (!q2Text) {
   q2Text = "Q2: Transferring unencrypted patient data to personal drives is permissible if deleted later? (Answer: False)";
 }
-if (!clientText || clientText.length < 15) {
+if (!clientText || clientText.length < 15 || clientText.includes("[3 Bullet Points]")) {
   clientText = "• Threshold Rule: Mass unauthorized transfers of unencrypted patient data meet summary dismissal criteria under Cap. 57 s.9.\n• Mistakes vs. Breaches: Unintentional privacy breaches involving medical records carry statutory liability regardless of worker intent.\n• Key Action Item: Healthcare organizations and staff must process all patient records within approved enterprise channels.";
 }
 
