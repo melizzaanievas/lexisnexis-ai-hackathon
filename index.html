@@ -10,34 +10,35 @@
 
 <style>
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 40px; background-color: #f4f6f8; color: #333; }
-.container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-h1 { color: #003366; margin-bottom: 5px; }
+.container { max-width: 920px; margin: 0 auto; background: #fff; padding: 35px; border-radius: 10px; box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+h1 { color: #003366; margin-bottom: 5px; font-size: 1.85em; }
 .subtitle { color: #666; font-size: 0.9em; margin-bottom: 25px; }
-.controls { background: #eef2f5; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
-select, button { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
-button { background: #003366; color: #fff; border: none; cursor: pointer; font-weight: bold; }
+.controls { background: #eef2f5; padding: 18px; border-radius: 8px; margin-bottom: 25px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; border: 1px solid #e2e8f0; }
+select, button { padding: 9px 14px; border-radius: 6px; border: 1px solid #cbd5e0; font-size: 14px; }
+button { background: #003366; color: #fff; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s ease; }
 button:hover { background: #002244; }
 .btn-secondary { background: #2d3748; }
 .btn-secondary:hover { background: #1a202c; }
 .btn-pptx { background: #d93025; }
 .btn-pptx:hover { background: #a50e0e; }
-.card { background: #eef6fc; border-left: 5px solid #0055a5; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+.card { background: #eef6fc; border-left: 5px solid #0055a5; padding: 18px; margin-bottom: 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
 .grid { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-.verdict-box { flex: 1; min-width: 280px; padding: 15px; border-radius: 6px; }
+.verdict-box { flex: 1; min-width: 280px; padding: 18px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
 .gross { background-color: #fdf2f2; border: 1px solid #f8b4b4; color: #9b1c1c; }
 .minor { background-color: #fef8ec; border: 1px solid #fce4b6; color: #8a5340; }
-.exercise { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; color: #166534; }
-.bridge-box { background: #f0f4f8; border-left: 5px solid #003366; padding: 15px; margin-bottom: 25px; border-radius: 4px; }
-.authorities { background: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; font-size: 0.85em; overflow-x: auto; max-height: 400px; }
-textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; padding: 10px; font-family: inherit; margin-top: 8px; margin-bottom: 10px; }
+.exercise { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 18px; border-radius: 8px; color: #166534; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+.bridge-box { background: #f0f4f8; border-left: 5px solid #003366; padding: 18px; margin-bottom: 25px; border-radius: 6px; }
+.authorities { background: #2d3748; color: #f7fafc; padding: 18px; border-radius: 8px; font-family: "Courier New", Courier, monospace; white-space: pre-wrap; font-size: 0.88em; overflow-x: auto; max-height: 420px; line-height: 1.5; }
+textarea { width: 100%; box-sizing: border-box; border-radius: 6px; border: 1px solid #cbd5e0; padding: 12px; font-family: inherit; margin-top: 8px; margin-bottom: 12px; }
 
 /* Disclaimer & Footer Styles */
-.disclaimer-box { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-top: 30px; font-size: 0.85em; color: #555; line-height: 1.5; }
+.disclaimer-box { background: #fffbe6; border: 1px solid #ffe58f; padding: 16px; border-radius: 8px; margin-top: 30px; font-size: 0.85em; color: #555; line-height: 1.5; }
 .disclaimer-title { font-weight: bold; color: #d46b08; margin-bottom: 5px; }
-.footer { margin-top: 25px; padding-top: 15px; border-top: 1px solid #e8e8e8; text-align: center; font-size: 0.85em; color: #666; line-height: 1.6; }
+.footer { margin-top: 25px; padding-top: 18px; border-top: 1px solid #e8e8e8; text-align: center; font-size: 0.85em; color: #666; line-height: 1.6; }
 .footer a { color: #003366; font-weight: bold; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 
+/* Clean Print Styles for PDF / Slide Exports */
 @media print {
   .controls, .bridge-box, button, textarea, .disclaimer-box, .footer { display: none !important; }
   body { background: #fff; margin: 0; }
@@ -219,6 +220,9 @@ function cleanUniversalText(text) {
   if (!text) return "";
   let cleaned = text;
   cleaned = cleaned.replace(/"[^"]*"/g, '');
+  // Purge trailing section title leakage
+  cleaned = cleaned.replace(/The\s*Verdict\s*$/gi, '');
+  cleaned = cleaned.replace(/AI\s*Assistant:?\s*$/gi, '');
   cleaned = cleaned.replace(/^[\s:\*\.\-]+/, '');
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/\.\s*\./g, '.').trim();
   return cleaned;
@@ -237,7 +241,6 @@ if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
 
-// Tokenize text inline using word boundaries
 let preparedText = rawText;
 preparedText = preparedText.replace(/(1\.\s*\*?The Scenario Card\*?|\[\[SCENARIO_CARD\]\]|The Scenario Card)/gi, '||SEC_SCENARIO||');
 preparedText = preparedText.replace(/(2\.\s*\*?The Verdict\*?|\[\[HIGH_THRESHOLD\]\]|High-Threshold Violation:?)/gi, '||SEC_HIGH||');
@@ -260,7 +263,6 @@ let exerciseText = sectionMap['SEC_EXERCISE'] || "";
 let clientText = sectionMap['SEC_TAKEAWAYS'] || "";
 let authorityText = sectionMap['SEC_GROUNDING'] || fullRawText;
 
-// Separate Q1 and Q2 from Clinical Exercise block
 let q1Text = "";
 let q2Text = "";
 
@@ -276,7 +278,6 @@ if (exerciseText.includes("Q2:")) {
   q1Text = cleanUniversalText(exerciseText);
 }
 
-// Ensure formatting for Client Takeaways
 if (clientText && !clientText.includes("•")) {
   clientText = clientText.replace(/(Threshold Rule:|Mistakes vs. Breaches:|Key Action Item:)/g, '\n• $1');
 }
