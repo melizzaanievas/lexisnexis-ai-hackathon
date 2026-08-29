@@ -21,3 +21,7 @@ REQUIRED OUTPUT TEMPLATE:
    - Question 1 (True/False): [A single T/F question testing the statutory threshold or primary rule under [PRIMARY_STATUTE_OR_LAW]].
    - Question 2 (True/False): [A single T/F question testing the judicial distinction or exception established in [PRIMARY_PRECEDENT]].
 
+4. **Non-Lawyer Client Takeaways:**
+   - **Threshold Rule:** [A 1-sentence plain-English explanation of the legal boundary under [PRIMARY_STATUTE_OR_LAW]].
+   - **Mistakes vs. Breaches:** [A 1-sentence practical distinction between minor errors and severe legal liability under [PRIMARY_PRECEDENT]].
+   - **Key Action Item:** [A 1-sentence recommended operational step for stakeholders facing similar situations].
