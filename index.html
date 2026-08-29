@@ -218,34 +218,13 @@ content.innerHTML = `
 }
 }
 
-// Clean helper function to strip raw legal noise, prompt parameters, and redundant headers
-function cleanCardText(text) {
+// Clean helper function to strip quote blocks and prompt metadata
+function cleanUniversalText(text) {
   if (!text) return "";
   let cleaned = text;
-  // Strip quotes
+  // Strip quoted text
   cleaned = cleaned.replace(/"[^"]*"/g, '');
-  // Strip prompt labels and AI headers
-  cleaned = cleaned.replace(/AI Assistant:?/gi, '');
-  cleaned = cleaned.replace(/\d\.\s*(The\s*)?Scenario\s*Card[^\n]*/gi, '');
-  cleaned = cleaned.replace(/Industry:[^\n]*/gi, '');
-  cleaned = cleaned.replace(/Role:[^\n]*/gi, '');
-  cleaned = cleaned.replace(/Worker\/Party:[^\n]*/gi, '');
-  cleaned = cleaned.replace(/Incident:[^\n]*/gi, '');
-  cleaned = cleaned.replace(/Primary Statute:[^\n]*/gi, '');
-  cleaned = cleaned.replace(/Allegation:[^\n]*/gi, '');
-  cleaned = cleaned.replace(/2\.\s*The\s*Verdict[^\n]*/gi, '');
-  cleaned = cleaned.replace(/vs\s*Low-Threshold\s*Defen[sc]e\)?/gi, '');
-  cleaned = cleaned.replace(/High-Threshold\s*Violation:?\*?/gi, '');
-  cleaned = cleaned.replace(/Low-Threshold\s*Defen[sc]e:?\*?/gi, '');
-  cleaned = cleaned.replace(/\(\d*\s*True\/False[^\)]*\)/gi, '');
-  cleaned = cleaned.replace(/\d\.\s*Non-Lawyer Client Takeaways[^\n]*/gi, '');
-  cleaned = cleaned.replace(/\d\.\s*Primary Legal Grounding[^\n]*/gi, '');
-  cleaned = cleaned.replace(/Privacy Management Programme for the medical industry\.?/gi, '');
-  cleaned = cleaned.replace(/Deacons:\s*Data protection[^\.]*\.?/gi, '');
-  cleaned = cleaned.replace(/CHAPTER 9 Confidential Information[^\.]*\.?/gi, '');
-  cleaned = cleaned.replace(/TERMINATION OF CONTRACT WITHOUT NOTICE BY EMPLOYER,?\s*s?\s*9\.?/gi, '');
-  cleaned = cleaned.replace(/\(HK\)\s+Chapter\s+\d+[\s\S]*?(?=\.|\n|$)/gi, '');
-  // Clean double spaces and leading characters
+  // Clean double spaces and leading noise
   cleaned = cleaned.replace(/^[\s:\*\.\-]+/, '');
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/\.\s*\./g, '.').trim();
   return cleaned;
@@ -260,94 +239,102 @@ if (!rawText) {
 
 let fullRawText = rawText;
 
-// 1. Cut footers
+// Cut subscription footers
 if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
 
-// Baseline Fallbacks
-let scenarioText = "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to a personal, unapproved cloud drive to finish work over the weekend.";
-let grossText = "Jordan's action constitutes a serious breach of DPP4 (failure to safeguard personal data against unauthorized access, loss, or transfer) and DPP3 (use of data for personal convenience without patient consent). The transfer of unencrypted sensitive health data to an unapproved external platform exposes patients and the clinic to material security risks.";
-let minorText = "Jordan may argue that the data transfer was an inadvertent technical oversight or work-from-home administrative convenience rather than willful misconduct or dishonesty. However, because the act involves a significant departure from established privacy policies, this defense is unlikely to succeed where stringent controls were provided.";
-let q1Text = "Q1: DPP4 under Cap. 486 requires healthcare staff to ensure all practicable steps are taken to safeguard personal data, regardless of whether work-from-home is permitted. (Answer: True)";
-let q2Text = "Q2: Transferring unencrypted patient data to a personal cloud drive, even with no intention to disclose it to third parties, does not constitute a breach if the data is eventually deleted. (Answer: False)";
-let clientText = "• Threshold Rule: Mass unauthorized transfer of unencrypted health data meets the high threshold for summary dismissal under Cap. 57 s.9.\n• Mistakes vs. Breaches: Unintentional privacy breaches involving patient records carry severe legal risk regardless of intent.\n• Key Action Item: Healthcare workers must strictly use authorized enterprise channels for remote medical record processing.";
+// Check if universal [[TAG]] brackets exist
+let hasUniversalTags = rawText.includes("[[SCENARIO_CARD]]") || rawText.includes("[[HIGH_THRESHOLD]]");
 
-// Extract Section 1 (Scenario)
-let sec1Match = rawText.match(/(?:Incident:|1\.\s*The Scenario Card)([\s\S]*?)(?=2\.\s*The Verdict|High-Threshold|Legal Assessment:)/i);
-if (sec1Match) {
-  let cleaned = cleanCardText(sec1Match[1]);
-  if (cleaned.length > 20) scenarioText = cleaned;
-}
+let scenarioText = "";
+let grossText = "";
+let minorText = "";
+let q1Text = "";
+let q2Text = "";
+let clientText = "";
+let authorityText = "";
 
-// Anchor-Based Extraction for High Risk Verdict
-let grossAnchorStart = rawText.search(/Jordan's action constitutes|High-Threshold Violation/i);
+if (hasUniversalTags) {
+  let extractTag = (tagName) => {
+    let regex = new RegExp("\\[\\[" + tagName + "\\]\\]([\\s\\S]*?)(?=\\[\\[|$)", "i");
+    let match = rawText.match(regex);
+    return match ? cleanUniversalText(match[1]) : "";
+  };
 
-// Multi-Anchor Search for Minor Error Verdict
-let minorSearchTerms = [/Jordan may argue/i, /Low-Threshold Defence/i, /Low-Threshold/i, /inadvertent technical oversight/i];
-let minorAnchorStart = -1;
-for (let regex of minorSearchTerms) {
-  let idx = rawText.search(regex);
-  if (idx !== -1 && (grossAnchorStart === -1 || idx > grossAnchorStart)) {
-    minorAnchorStart = idx;
-    break;
-  }
-}
-
-if (grossAnchorStart !== -1) {
-  let endIdx = minorAnchorStart !== -1 ? minorAnchorStart : rawText.length;
-  let rawGross = rawText.substring(grossAnchorStart, endIdx);
-  let cleanedGross = cleanCardText(rawGross);
-  if (cleanedGross.length > 30) grossText = cleanedGross;
-}
-
-// Extract Minor Error Verdict
-let exerciseAnchorStart = rawText.search(/Clinical Exercise|✔/i);
-if (minorAnchorStart !== -1) {
-  let endIdx = exerciseAnchorStart !== -1 ? exerciseAnchorStart : rawText.length;
-  let rawMinor = rawText.substring(minorAnchorStart, endIdx);
-  let cleanedMinor = cleanCardText(rawMinor);
-  if (cleanedMinor.length > 30) minorText = cleanedMinor;
-}
-
-// Extract Section 3 (Clinical Exercise Questions)
-if (rawText.toLowerCase().includes("q1:") && rawText.toLowerCase().includes("q2:")) {
-  let q1Match = rawText.match(/Q1:[\s\S]*?(?=2\.\s*Q2:|Q2:)/i);
-  let q2Match = rawText.match(/Q2:[\s\S]*?(?=4\.\s*Non-Lawyer|Non-Lawyer Client Takeaways|Primary Legal Grounding|Statutory Clauses:|$)/i);
+  scenarioText = extractTag("SCENARIO_CARD");
+  grossText = extractTag("HIGH_THRESHOLD");
+  minorText = extractTag("LOW_THRESHOLD");
   
-  if (q1Match) {
-    let rawQ1 = q1Match[0].replace(/Answer:\s*True\.?/i, '(Answer: True)').trim();
-    q1Text = cleanCardText(rawQ1);
-    if (!q1Text.toLowerCase().startsWith("q1:")) q1Text = "Q1: " + q1Text;
+  let rawExercise = extractTag("CLINICAL_EXERCISE");
+  if (rawExercise.includes("Q2:")) {
+    let parts = rawExercise.split(/Q2:/i);
+    q1Text = parts[0].trim();
+    q2Text = "Q2: " + parts[1].trim();
+  } else {
+    q1Text = rawExercise;
   }
-  if (q2Match) {
-    let rawQ2 = q2Match[0].replace(/Answer:\s*False\.?/i, '(Answer: False)').trim();
-    q2Text = cleanCardText(rawQ2);
-    if (!q2Text.toLowerCase().startsWith("q2:")) q2Text = "Q2: " + q2Text;
-    if (!q2Text.toLowerCase().includes("answer:")) q2Text += " (Answer: False)";
+
+  clientText = extractTag("CLIENT_TAKEAWAYS");
+  authorityText = extractTag("PRIMARY_GROUNDING");
+} else {
+  // Legacy RegEx splitting pass
+  let tempText = rawText;
+  tempText = tempText.replace(/(1\.\s*The Scenario Card|Scenario Card|Industry:)/gi, '||SEC1||');
+  tempText = tempText.replace(/(2\.\s*The Verdict|High-Threshold Violation|Legal Assessment:\s*High Risk)/gi, '||SEC2_HIGH||');
+  tempText = tempText.replace(/(Low-Threshold Defen[sc]e|Legal Assessment:\s*Minor)/gi, '||SEC2_LOW||');
+  tempText = tempText.replace(/(3\.\s*Clinical Exercise|Clinical Exercise)/gi, '||SEC3||');
+  tempText = tempText.replace(/(4\.\s*Non-Lawyer Client Takeaways|Client Takeaways)/gi, '||SEC4||');
+  tempText = tempText.replace(/(5\.\s*Primary Legal Grounding|Primary Legal Grounding)/gi, '||SEC5||');
+
+  let parts = tempText.split(/\|\|(SEC1|SEC2_HIGH|SEC2_LOW|SEC3|SEC4|SEC5)\|\|/);
+  let chunks = {};
+  for (let i = 1; i < parts.length; i += 2) {
+    chunks[parts[i]] = parts[i + 1] || "";
   }
+
+  scenarioText = cleanUniversalText(chunks['SEC1']);
+  grossText = cleanUniversalText(chunks['SEC2_HIGH']);
+  minorText = cleanUniversalText(chunks['SEC2_LOW']);
+  
+  let rawQuiz = chunks['SEC3'] || "";
+  if (rawQuiz.toLowerCase().includes("q2:")) {
+    let qParts = rawQuiz.split(/Q2:/i);
+    q1Text = cleanUniversalText(qParts[0]);
+    q2Text = "Q2: " + cleanUniversalText(qParts[1]);
+  } else {
+    q1Text = cleanUniversalText(rawQuiz);
+  }
+
+  clientText = cleanUniversalText(chunks['SEC4']);
+  authorityText = chunks['SEC5'] ? chunks['SEC5'].trim() : fullRawText;
 }
 
-// Extract Section 4 (Client Takeaways)
-let clientMatch = rawText.match(/(?:Non-Lawyer Client Takeaways|4\.\s*Non-Lawyer Client Takeaways)([\s\S]*?)(?=5\.\s*Primary Legal Grounding|Primary Legal Grounding|Statutory Clauses:|$)/i);
-if (clientMatch) {
-  let rawClient = clientMatch[1].trim();
-  let items = rawClient.split("\n").map(l => cleanCardText(l)).filter(l => l.length > 10);
-  if (items.length > 0) {
-    clientText = items.map(item => item.startsWith("•") ? item : "• " + item).join("\n");
-  }
+// Graceful Empty State Handler: Contextual placeholders when a section is missing
+if (!scenarioText || scenarioText.length < 15) {
+  scenarioText = "ℹ️ No Scenario Card section detected in the imported text. Include [[SCENARIO_CARD]] in your Protégé output to populate this section.";
 }
-
-// Extract Section 5 (Primary Legal Grounding)
-let authorityText = fullRawText;
-if (fullRawText.includes("LexisNexis Primary Legal Grounding")) {
-  authorityText = fullRawText.split("LexisNexis Primary Legal Grounding")[1].trim();
-} else if (fullRawText.includes("Statutory Clauses:")) {
-  authorityText = "Statutory Clauses:" + fullRawText.split("Statutory Clauses:")[1].trim();
+if (!grossText || grossText.length < 15) {
+  grossText = "ℹ️ No High-Threshold assessment found. Ensure [[HIGH_THRESHOLD]] is present in the imported text.";
+}
+if (!minorText || minorText.length < 15) {
+  minorText = "ℹ️ No Low-Threshold defense found. Ensure [[LOW_THRESHOLD]] is present in the imported text.";
+}
+if (!q1Text) {
+  q1Text = "Q1: No Clinical Exercise question detected. (Include [[CLINICAL_EXERCISE]] in prompt)";
+}
+if (!q2Text) {
+  q2Text = "Q2: No second question found.";
+}
+if (!clientText) {
+  clientText = "• Missing Takeaways: Include [[CLIENT_TAKEAWAYS]] in your Protégé prompt to render client briefing points.";
+}
+if (!authorityText) {
+  authorityText = "ℹ️ No Primary Legal Grounding detected in the export.";
 }
 
 customParsedData = {
-  title: "🎴 Custom Rendered Output (Jordan Telehealth Scenario)",
+  title: "🎴 Custom Rendered Output (Universal Protégé Ingestion)",
   story: scenarioText,
   gross: grossText,
   minor: minorText,
