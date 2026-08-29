@@ -56,7 +56,7 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <div class="bridge-box">
 <h3>📥 Protégé Word / PDF Export Live Ingestion Bridge</h3>
 <p style="font-size: 0.9em; color: #444;">Paste raw text exported from your Protégé Word/PDF export below. The parser will automatically format it into interactive web display cards:</p>
-<textarea id="protegePaste" rows="4" placeholder="Paste Protégé output here (e.g. 1. The Scenario Card, 2. The Verdict, 3. Clinical Exercise, 4. Non-Lawyer Client Takeaways, 5. Legal Grounding)..."></textarea>
+<textarea id="protegePaste" rows="4" placeholder="Paste raw Protégé text here..."></textarea>
 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 <button onclick="parseProtegeInput()">Render Custom Display Cards</button>
 <span style="font-size: 0.85em; color: #666;">Need the prompt template? <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon/tree/main/experiments" target="_blank" style="color: #003366; font-weight: bold;">Learn how to prompt Protégé for exports ↗</a></span>
@@ -219,10 +219,29 @@ content.innerHTML = `
 }
 
 function parseProtegeInput() {
-const rawText = document.getElementById('protegePaste').value.trim();
+let rawText = document.getElementById('protegePaste').value.trim();
 if (!rawText) {
-alert("Please paste text from your Protégé Word or PDF export first!");
-return;
+  alert("Please paste text from your Protégé Word or PDF export first!");
+  return;
+}
+
+// 0. Stripping user prompts, usernames, and LexisNexis system footers
+if (rawText.includes("Content supporting AI-generated response:")) {
+  rawText = rawText.split("Content supporting AI-generated response:")[0].trim();
+}
+if (rawText.includes("Content outside your subscription:")) {
+  rawText = rawText.split("Content outside your subscription:")[0].trim();
+}
+
+// Remove initial user prompt header if copied together (e.g. "Melizza Anievas: Using universal...")
+if (rawText.includes("Protégé™")) {
+  rawText = rawText.split("Protégé™")[1].trim();
+} else if (rawText.toLowerCase().includes("the scenario card")) {
+  let firstIdx = rawText.toLowerCase().indexOf("the scenario card");
+  rawText = rawText.substring(firstIdx).trim();
+} else if (rawText.toLowerCase().includes("scenario card")) {
+  let firstIdx = rawText.toLowerCase().indexOf("scenario card");
+  rawText = rawText.substring(firstIdx).trim();
 }
 
 let scenarioText = "Custom Scenario Imported from Protégé.";
@@ -234,38 +253,38 @@ let clientText = "";
 let extractedAuthority = "";
 
 // 1. Extract Scenario Card
-if (rawText.toLowerCase().includes("scenario card:")) {
-  let part = rawText.split(/scenario card:/i)[1];
+if (rawText.toLowerCase().includes("scenario card")) {
+  let part = rawText.split(/scenario card/i)[1];
   if (part) {
-    scenarioText = part.split(/2\.|the verdict:|verdict:/i)[0].replace(/----------------/g, '').trim();
+    scenarioText = part.split(/2\.|the verdict|verdict/i)[0].replace(/^[:\s\-]+/g, '').replace(/----------------/g, '').trim();
   }
 } else {
-  let cleanLines = rawText.split("\n").filter(l => l.trim().length > 0 && !l.startsWith("Using ") && !l.startsWith("• ["));
-  if (cleanLines.length > 0) scenarioText = cleanLines.slice(0, 3).join(" ");
+  let cleanLines = rawText.split("\n").filter(l => l.trim().length > 0 && !l.startsWith("Using ") && !l.startsWith("• [") && !l.startsWith("Melizza"));
+  if (cleanLines.length > 0) scenarioText = cleanLines.slice(0, 4).join(" ");
 }
 
 // 2. Extract Verdicts (High vs Low Threshold)
-if (rawText.toLowerCase().includes("verdict:")) {
-  let verdictBlock = rawText.split(/verdict:/i)[1];
+if (rawText.toLowerCase().includes("verdict")) {
+  let verdictBlock = rawText.split(/verdict/i)[1];
   if (verdictBlock) {
-    let subBlock = verdictBlock.split(/3\.|clinical exercise:/i)[0].trim();
+    let subBlock = verdictBlock.split(/3\.|clinical exercise/i)[0].replace(/^[:\s\(\)\-]+/g, '').trim();
     
-    if (subBlock.toLowerCase().includes("low-threshold") || subBlock.toLowerCase().includes("minor negligence") || subBlock.toLowerCase().includes("low_threshold")) {
-      let highLowSplit = subBlock.split(/(?=low-threshold|low_threshold|minor negligence|mitigating factor)/i);
+    if (subBlock.toLowerCase().includes("low-threshold") || subBlock.toLowerCase().includes("low_threshold") || subBlock.toLowerCase().includes("low-threshold defence") || subBlock.toLowerCase().includes("low-threshold defense")) {
+      let highLowSplit = subBlock.split(/(?=low-threshold|low_threshold|low-threshold defence|low-threshold defense)/i);
       grossText = highLowSplit[0].trim().replace(/^[-*•]\s*/, '');
       minorText = (highLowSplit[1] || "").trim().replace(/^[-*•]\s*/, '');
     } else {
       grossText = subBlock;
-      minorText = "Evaluate mitigating factors or inadvertent administrative oversight.";
+      minorText = "Evaluate mitigating factors, inadvertent technical oversight, or work-from-home misunderstandings.";
     }
   }
 }
 
 // 3. Extract Clinical Exercise
-if (rawText.toLowerCase().includes("clinical exercise:")) {
-  let exerciseBlock = rawText.split(/clinical exercise:/i)[1];
+if (rawText.toLowerCase().includes("clinical exercise")) {
+  let exerciseBlock = rawText.split(/clinical exercise/i)[1];
   if (exerciseBlock) {
-    let cleanBlock = exerciseBlock.split(/4\.|non-lawyer client takeaways:|client takeaways:|5\.|primary legal grounding/i)[0].trim();
+    let cleanBlock = exerciseBlock.split(/4\.|non-lawyer client takeaways|client takeaways|5\.|primary legal grounding|legal grounding/i)[0].replace(/^[:\s\(\)\-]+/g, '').trim();
     let exLines = cleanBlock.split("\n").filter(l => l.trim().length > 0);
     if (exLines.length >= 2) {
       q1Text = exLines[0].trim();
@@ -277,10 +296,10 @@ if (rawText.toLowerCase().includes("clinical exercise:")) {
 }
 
 // 4. Extract Non-Lawyer Client Takeaways (Section 4)
-if (rawText.toLowerCase().includes("client takeaways:")) {
-  let clientBlock = rawText.split(/client takeaways:/i)[1];
+if (rawText.toLowerCase().includes("client takeaways")) {
+  let clientBlock = rawText.split(/client takeaways/i)[1];
   if (clientBlock) {
-    let cleanClientBlock = clientBlock.split(/5\.|primary legal grounding|legal grounding:/i)[0].trim();
+    let cleanClientBlock = clientBlock.split(/5\.|primary legal grounding|legal grounding/i)[0].replace(/^[:\s\-]+/g, '').trim();
     let lines = cleanClientBlock.split("\n").filter(l => l.trim().length > 0);
     clientText = lines.map(l => l.trim().startsWith("•") || l.trim().startsWith("-") ? l.trim() : "• " + l.trim()).join("\n");
   }
@@ -291,10 +310,10 @@ if (!clientText) {
 }
 
 // 5. Extract Section 5 Legal Grounding directly if present
-if (rawText.toLowerCase().includes("primary legal grounding") || rawText.toLowerCase().includes("legal grounding:")) {
-  let groundingBlock = rawText.split(/primary legal grounding|legal grounding:/i)[1];
+if (rawText.toLowerCase().includes("primary legal grounding") || rawText.toLowerCase().includes("legal grounding")) {
+  let groundingBlock = rawText.split(/primary legal grounding|legal grounding/i)[1];
   if (groundingBlock) {
-    extractedAuthority = groundingBlock.trim();
+    extractedAuthority = groundingBlock.replace(/^[:\s\-]+/g, '').trim();
   }
 }
 
@@ -308,8 +327,10 @@ if (!extractedAuthority) {
 
   let precedentFound = "Relevant HK Judicial Precedents & PCPD Rulings";
   if (rawText.includes("Tsang Tak Chi")) precedentFound = "TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366";
+  if (rawText.includes("CHAN YIM WAH")) precedentFound = "CHAN YIM WAH WALLACE v NEW WORLD FIRST FERRY SERVICES LTD [2015] 3 HKC 382";
+  if (rawText.includes("Y v LAW SOCIETY")) precedentFound = "Y v LAW SOCIETY OF HONG KONG [2017] HKCU 1059";
 
-  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0] || "Personal Data (Privacy) Ordinance (Cap. 486)"}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - Employment Ordinance (Cap. 57) s. 9 Summary Dismissal Framework`;
+  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0] || "Personal Data (Privacy) Ordinance (Cap. 486)"}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - ${statutesFound.slice(1).join("\n - ") || "Employment Ordinance (Cap. 57) s. 9 Summary Dismissal Framework"}`;
 }
 
 // Save to custom state for UI rendering and PowerPoint export
