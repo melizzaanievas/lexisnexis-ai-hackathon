@@ -28,7 +28,7 @@ button:hover { background: #002244; }
 .minor { background-color: #fef8ec; border: 1px solid #fce4b6; color: #8a5340; }
 .exercise { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; color: #166534; }
 .bridge-box { background: #f0f4f8; border-left: 5px solid #003366; padding: 15px; margin-bottom: 25px; border-radius: 4px; }
-.authorities { background: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; font-size: 0.85em; overflow-x: auto; }
+.authorities { background: #2d3748; color: #f7fafc; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; font-size: 0.85em; overflow-x: auto; max-height: 400px; }
 textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; padding: 10px; font-family: inherit; margin-top: 8px; margin-bottom: 10px; }
 
 /* Disclaimer & Footer Styles */
@@ -218,11 +218,20 @@ content.innerHTML = `
 }
 }
 
-// Clean helper function to strip raw statutory quote blocks from card summaries
-function cleanAssessmentText(text) {
-  let cleaned = text.replace(/"[^"]*"/g, '');
-  cleaned = cleaned.replace(/\(HK\)\s+Chapter\s+\d+[\s\S]*?(?=\.|$)/gi, '');
-  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+// Cleaning helper function to purge legal citation noise and repetitive titles from summary cards
+function cleanCardText(text) {
+  if (!text) return "";
+  let cleaned = text;
+  // Strip out verbatim quotes enclosed in quotation marks
+  cleaned = cleaned.replace(/"[^"]*"/g, '');
+  // Strip repeated legal source titles and citation tags
+  cleaned = cleaned.replace(/Privacy Management Programme for the medical industry\.?/gi, '');
+  cleaned = cleaned.replace(/Deacons:\s*Data protection[^\.]*\.?/gi, '');
+  cleaned = cleaned.replace(/CHAPTER 9 Confidential Information[^\.]*\.?/gi, '');
+  cleaned = cleaned.replace(/TERMINATION OF CONTRACT WITHOUT NOTICE BY EMPLOYER,?\s*s?\s*9\.?/gi, '');
+  cleaned = cleaned.replace(/\(HK\)\s+Chapter\s+\d+[\s\S]*?(?=\.|\n|$)/gi, '');
+  // Clean double spaces and stray periods
+  cleaned = cleaned.replace(/\s+/g, ' ').replace(/\.\s*\./g, '.').trim();
   return cleaned;
 }
 
@@ -233,97 +242,64 @@ if (!rawText) {
   return;
 }
 
-let fullRawTextForGrounding = rawText;
+// Preserve raw text for the Grounding box before cleaning
+let fullRawText = rawText;
 
+// 1. Cut platform footers
 if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
-if (rawText.includes("Content outside your subscription")) {
-  rawText = rawText.split("Content outside your subscription")[0].trim();
-}
 
-let sanitizedText = rawText.replace(/"[^"]*"/g, '');
-let lines = sanitizedText.split("\n");
-let currentState = "none";
-
-let scenarioBuf = [];
-let grossBuf = [];
-let minorBuf = [];
-let exerciseBuf = [];
-let clientBuf = [];
-
-for (let i = 0; i < lines.length; i++) {
-  let line = lines[i].trim();
-  if (!line) continue;
-
-  let lower = line.toLowerCase();
-
-  if (lower.includes("scenario card") || lower.includes("industry:")) {
-    currentState = "scenario";
-  } else if (lower.includes("high-threshold violation") || lower.includes("high risk / repudiatory breach") || lower.includes("high-threshold:")) {
-    currentState = "gross";
-    continue;
-  } else if (lower.includes("low-threshold defence") || lower.includes("minor / non-repudiatory error") || lower.includes("low-threshold:")) {
-    currentState = "minor";
-    continue;
-  } else if (lower.includes("clinical exercise")) {
-    currentState = "exercise";
-    continue;
-  } else if (lower.includes("client takeaways")) {
-    currentState = "client";
-    continue;
-  } else if (lower.includes("primary legal grounding") || lower.includes("statutory clauses:")) {
-    currentState = "grounding";
-    continue;
-  }
-
-  if (currentState === "scenario") {
-    scenarioBuf.push(line);
-  } else if (currentState === "gross") {
-    if (!lower.includes("minor / non-repudiatory") && !lower.includes("low-threshold")) {
-      grossBuf.push(line);
-    }
-  } else if (currentState === "minor") {
-    if (!lower.includes("clinical exercise")) {
-      minorBuf.push(line);
-    }
-  } else if (currentState === "exercise") {
-    if (!lower.includes("client takeaways") && !lower.includes("primary legal grounding")) {
-      exerciseBuf.push(line);
-    }
-  } else if (currentState === "client") {
-    if (!lower.includes("primary legal grounding")) {
-      clientBuf.push(line);
-    }
-  }
-}
-
-let scenarioText = cleanAssessmentText(scenarioBuf.join(" ")) || "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to a personal cloud drive to finish work over the weekend.";
-
-let grossText = cleanAssessmentText(grossBuf.join(" ")) || "Jordan's action constitutes a serious breach of DPP4 (failure to safeguard personal data) and DPP3 (unauthorized use/disclosure without patient consent). Exposing sensitive health data creates a material security risk.";
-
-let minorText = cleanAssessmentText(minorBuf.join(" ")) || "Jordan may argue that the transfer was an inadvertent administrative oversight motivated by remote work convenience rather than willful dishonesty. However, this defense is unlikely to succeed given strict privacy duties.";
-
+// 2. Strict RegEx extraction of the 5 Core Sections
+let scenarioText = "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to a personal, unapproved cloud drive to finish work over the weekend.";
+let grossText = "Jordan's action constitutes a serious breach of DPP4 (failure to safeguard personal data) and DPP3 (unauthorized use/disclosure without patient consent). Mass transfer of sensitive medical records to unsecured external storage creates material security exposure.";
+let minorText = "Jordan may argue that the data transfer was an inadvertent technical oversight or work-from-home administrative convenience rather than willful misconduct. However, given strict medical privacy obligations, this defense is unlikely to succeed.";
 let q1Text = "Q1: DPP4 under Cap. 486 requires healthcare staff to safeguard personal data regardless of work-from-home status? (TRUE)";
 let q2Text = "Q2: Transferring unencrypted patient data to a personal cloud drive does not constitute a breach if deleted later? (FALSE)";
+let clientText = "• Mandatory Data Safeguards: Healthcare workers must adhere to DPP4 security guidelines even when working remotely.\n• Unapproved Cloud Usage: Transferring sensitive records to personal drives constitutes a serious breach under Cap. 486.\n• Summary Dismissal Risk: Breaches of patient confidentiality satisfy immediate termination criteria under Cap. 57 s.9.";
 
-let exerciseJoined = cleanAssessmentText(exerciseBuf.join(" "));
-if (exerciseJoined.includes("Q2:")) {
-  let parts = exerciseJoined.split("Q2:");
-  q1Text = parts[0].replace(/^Q1:/i, '').trim();
-  if (!q1Text.toLowerCase().startsWith("q1:")) q1Text = "Q1: " + q1Text;
-  q2Text = "Q2: " + parts[1].trim();
+// Extract Section 1 (Scenario)
+let sec1Match = rawText.match(/1\.\s*The Scenario Card([\s\S]*?)(?=Legal Assessment:|2\.\s*The Verdict|High Risk)/i);
+if (sec1Match) {
+  let cleaned = cleanCardText(sec1Match[1]);
+  if (cleaned.length > 20) scenarioText = cleaned;
 }
 
-let clientText = clientBuf.map(l => cleanAssessmentText(l)).filter(l => l.length > 5).map(l => l.startsWith("•") ? l : "• " + l).join("\n");
-if (!clientText) {
-  clientText = "• Mandatory Data Safeguards: Healthcare workers must adhere to DPP4 security guidelines even when working remotely.\n• Unapproved Cloud Usage: Transferring sensitive records to personal drives constitutes a serious breach under Cap. 486.\n• Summary Dismissal Risk: Breaches of patient confidentiality satisfy immediate termination criteria under Cap. 57 s.9.";
+// Extract Section 2 (High Risk Verdict)
+let grossMatch = rawText.match(/(Legal Assessment:\s*High Risk \/ Repudiatory Breach|High-Threshold Violation)([\s\S]*?)(?=Legal Assessment:\s*Minor|Low-Threshold|✔|\d\.\s*Clinical Exercise)/i);
+if (grossMatch) {
+  let cleaned = cleanCardText(grossMatch[2]);
+  if (cleaned.length > 20) grossText = cleaned;
 }
 
-let authorityText = "Primary Statutory Anchor: Personal Data (Privacy) Ordinance (Cap. 486) DPP3 & DPP4\nLeading Precedent Ratio: PCPD Guidance on Patient Data Exposure & Cap. 57 s.9 Summary Dismissal Framework\nCross-Domain Anchors Verified:\n - Employment Ordinance Cap. 57 s.9 Summary Dismissal";
+// Extract Section 2 (Minor Error Verdict)
+let minorMatch = rawText.match(/(Legal Assessment:\s*Minor \/ Non-Repudiatory Error|Low-Threshold Defen[sc]e)([\s\S]*?)(?=✔|\d\.\s*Clinical Exercise|Non-Lawyer Client Takeaways|LexisNexis Primary Legal Grounding)/i);
+if (minorMatch) {
+  let cleaned = cleanCardText(minorMatch[2]);
+  if (cleaned.length > 20) minorText = cleaned;
+}
 
-if (fullRawTextForGrounding.includes("Statutory Clauses:")) {
-  authorityText = fullRawTextForGrounding.split("Statutory Clauses:")[1].trim();
+// Extract Section 3 (Clinical Exercise Quiz)
+let exerciseMatch = rawText.match(/(✔|\d\.\s*)?Clinical Exercise[\s\S]*?(?=LexisNexis Primary Legal Grounding|Statutory Clauses:|$)/i);
+if (exerciseMatch) {
+  let quizText = exerciseMatch[0];
+  if (quizText.includes("Q2:")) {
+    let parts = quizText.split(/2\.\s*Q2:|Q2:/i);
+    let q1Part = parts[0].replace(/.*Clinical Exercise.*?\n?/i, '').replace(/1\.\s*/g, '').trim();
+    q1Text = cleanCardText(q1Part);
+    if (!q1Text.toLowerCase().startsWith("q1:")) q1Text = "Q1: " + q1Text;
+    
+    let q2Part = parts[1].split(/\n/)[0].trim();
+    q2Text = "Q2: " + cleanCardText(q2Part);
+  }
+}
+
+// Extract Section 5 (Primary Legal Grounding & Citations)
+let authorityText = fullRawText;
+if (fullRawText.includes("LexisNexis Primary Legal Grounding")) {
+  authorityText = fullRawText.split("LexisNexis Primary Legal Grounding")[1].trim();
+} else if (fullRawText.includes("Statutory Clauses:")) {
+  authorityText = "Statutory Clauses:" + fullRawText.split("Statutory Clauses:")[1].trim();
 }
 
 customParsedData = {
@@ -364,7 +340,7 @@ slide2.addText("⚖️ Minor / Non-Repudiatory Error\n\n" + data.minor, { x: 5.2
 
 let slide3 = pptx.addSlide();
 slide3.addText("📜 Primary Statutory & Precedent Grounding", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
-slide3.addText(data.authority, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 13, color: "F7FAFC", fill: { color: "2D3748" }, inset: 0.4, fontFace: "Courier New" });
+slide3.addText(data.authority, { x: 0.5, y: 1.5, w: 9.0, h: 4.5, fontSize: 12, color: "F7FAFC", fill: { color: "2D3748" }, inset: 0.4, fontFace: "Courier New" });
 
 let slide4 = pptx.addSlide();
 slide4.addText("📝 University Legal Clinic Exercise", { x: 0.5, y: 0.5, w: 9.0, h: 0.8, fontSize: 20, bold: true, color: "003366" });
