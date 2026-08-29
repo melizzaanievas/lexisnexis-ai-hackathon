@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Protégé: Scenario-to-Authority Educational Engine</title>
 
-<!-- PptxGenJS Library for Client-Side Editable PPTX / Google Slides Generation -->
+<!-- PptxGenJS Library for Client-Side Editable PPTX Generation -->
 <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
 <style>
@@ -56,7 +56,7 @@ textarea { width: 100%; box-sizing: border-box; border-radius: 4px; border: 1px 
 <div class="bridge-box">
 <h3>📥 Protégé Word / PDF Export Live Ingestion Bridge</h3>
 <p style="font-size: 0.9em; color: #444;">Paste raw text exported from your Protégé Word/PDF export below. The parser will automatically format it into interactive web display cards:</p>
-<textarea id="protegePaste" rows="4" placeholder="Paste raw Protégé text here..."></textarea>
+<textarea id="protegePaste" rows="4" placeholder="Paste raw Protégé output here..."></textarea>
 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
 <button onclick="parseProtegeInput()">Render Custom Display Cards</button>
 <span style="font-size: 0.85em; color: #666;">Need the prompt template? <a href="https://github.com/melizzaanievas/lexisnexis-ai-hackathon/tree/main/experiments" target="_blank" style="color: #003366; font-weight: bold;">Learn how to prompt Protégé for exports ↗</a></span>
@@ -225,7 +225,7 @@ if (!rawText) {
   return;
 }
 
-// 0. Stripping user prompts, usernames, and LexisNexis system footers
+// Clean LexisNexis platform footers and subscription notes
 if (rawText.includes("Content supporting AI-generated response:")) {
   rawText = rawText.split("Content supporting AI-generated response:")[0].trim();
 }
@@ -233,15 +233,15 @@ if (rawText.includes("Content outside your subscription:")) {
   rawText = rawText.split("Content outside your subscription:")[0].trim();
 }
 
-// Remove initial user prompt header if copied together (e.g. "Melizza Anievas: Using universal...")
+// Strip user prompt, speaker labels, and instructions
 if (rawText.includes("Protégé™")) {
   rawText = rawText.split("Protégé™")[1].trim();
-} else if (rawText.toLowerCase().includes("the scenario card")) {
-  let firstIdx = rawText.toLowerCase().indexOf("the scenario card");
-  rawText = rawText.substring(firstIdx).trim();
-} else if (rawText.toLowerCase().includes("scenario card")) {
-  let firstIdx = rawText.toLowerCase().indexOf("scenario card");
-  rawText = rawText.substring(firstIdx).trim();
+}
+
+// Remove any leading instruction lines or parameter lists before Section 1
+let scenarioStartIndex = rawText.search(/(1\.\s*)?(The\s*)?Scenario Card/i);
+if (scenarioStartIndex !== -1) {
+  rawText = rawText.substring(scenarioStartIndex).trim();
 }
 
 let scenarioText = "Custom Scenario Imported from Protégé.";
@@ -252,69 +252,62 @@ let q2Text = "Q2: As extracted from Protégé output.";
 let clientText = "";
 let extractedAuthority = "";
 
-// 1. Extract Scenario Card
-if (rawText.toLowerCase().includes("scenario card")) {
-  let part = rawText.split(/scenario card/i)[1];
-  if (part) {
-    scenarioText = part.split(/2\.|the verdict|verdict/i)[0].replace(/^[:\s\-]+/g, '').replace(/----------------/g, '').trim();
-  }
-} else {
-  let cleanLines = rawText.split("\n").filter(l => l.trim().length > 0 && !l.startsWith("Using ") && !l.startsWith("• [") && !l.startsWith("Melizza"));
-  if (cleanLines.length > 0) scenarioText = cleanLines.slice(0, 4).join(" ");
+// 1. Extract Scenario Card (Section 1)
+let verdictIndex = rawText.search(/(2\.\s*)?(The\s*)?Verdict/i);
+if (verdictIndex !== -1) {
+  let sec1 = rawText.substring(0, verdictIndex);
+  scenarioText = sec1.replace(/^(1\.\s*)?(The\s*)?Scenario Card\s*/i, '').replace(/----------------/g, '').trim();
 }
 
-// 2. Extract Verdicts (High vs Low Threshold)
-if (rawText.toLowerCase().includes("verdict")) {
-  let verdictBlock = rawText.split(/verdict/i)[1];
-  if (verdictBlock) {
-    let subBlock = verdictBlock.split(/3\.|clinical exercise/i)[0].replace(/^[:\s\(\)\-]+/g, '').trim();
-    
-    if (subBlock.toLowerCase().includes("low-threshold") || subBlock.toLowerCase().includes("low_threshold") || subBlock.toLowerCase().includes("low-threshold defence") || subBlock.toLowerCase().includes("low-threshold defense")) {
-      let highLowSplit = subBlock.split(/(?=low-threshold|low_threshold|low-threshold defence|low-threshold defense)/i);
-      grossText = highLowSplit[0].trim().replace(/^[-*•]\s*/, '');
-      minorText = (highLowSplit[1] || "").trim().replace(/^[-*•]\s*/, '');
-    } else {
-      grossText = subBlock;
-      minorText = "Evaluate mitigating factors, inadvertent technical oversight, or work-from-home misunderstandings.";
-    }
+// 2. Extract Verdict (Section 2)
+let exerciseIndex = rawText.search(/(3\.\s*)?Clinical Exercise/i);
+if (verdictIndex !== -1 && exerciseIndex !== -1) {
+  let sec2 = rawText.substring(verdictIndex, exerciseIndex).replace(/^(2\.\s*)?(The\s*)?Verdict(\s*\(.*?\))?\s*/i, '').trim();
+  
+  let lowIndex = sec2.search(/Low-Threshold\s*(Defense|Defence)?/i);
+  if (lowIndex !== -1) {
+    grossText = sec2.substring(0, lowIndex).replace(/High-Threshold\s*(Violation)?\s*:?/i, '').trim();
+    minorText = sec2.substring(lowIndex).replace(/Low-Threshold\s*(Defense|Defence)?\s*:?/i, '').trim();
+  } else {
+    grossText = sec2;
+    minorText = "Evaluate mitigating factors or inadvertent technical oversight.";
   }
 }
 
-// 3. Extract Clinical Exercise
-if (rawText.toLowerCase().includes("clinical exercise")) {
-  let exerciseBlock = rawText.split(/clinical exercise/i)[1];
-  if (exerciseBlock) {
-    let cleanBlock = exerciseBlock.split(/4\.|non-lawyer client takeaways|client takeaways|5\.|primary legal grounding|legal grounding/i)[0].replace(/^[:\s\(\)\-]+/g, '').trim();
-    let exLines = cleanBlock.split("\n").filter(l => l.trim().length > 0);
-    if (exLines.length >= 2) {
-      q1Text = exLines[0].trim();
-      q2Text = exLines[1].trim();
-    } else if (exLines.length === 1) {
-      q1Text = exLines[0].trim();
+// 3. Extract Clinical Exercise (Section 3)
+let clientIndex = rawText.search(/(4\.\s*)?(Non-Lawyer\s*)?Client Takeaways/i);
+if (exerciseIndex !== -1) {
+  let endExercise = (clientIndex !== -1) ? clientIndex : rawText.length;
+  let sec3 = rawText.substring(exerciseIndex, endExercise).replace(/^(3\.\s*)?Clinical Exercise(\s*\(.*?\))?\s*/i, '').trim();
+  
+  let qLines = sec3.split("\n").filter(l => l.trim().length > 0);
+  if (qLines.length >= 2) {
+    q1Text = qLines[0].trim();
+    q2Text = qLines.slice(1).join(" ").trim();
+    if (q2Text.includes("Q2:")) {
+      let parts = sec3.split(/Q2:/i);
+      q1Text = parts[0].trim();
+      q2Text = "Q2: " + parts[1].trim();
     }
   }
 }
 
 // 4. Extract Non-Lawyer Client Takeaways (Section 4)
-if (rawText.toLowerCase().includes("client takeaways")) {
-  let clientBlock = rawText.split(/client takeaways/i)[1];
-  if (clientBlock) {
-    let cleanClientBlock = clientBlock.split(/5\.|primary legal grounding|legal grounding/i)[0].replace(/^[:\s\-]+/g, '').trim();
-    let lines = cleanClientBlock.split("\n").filter(l => l.trim().length > 0);
-    clientText = lines.map(l => l.trim().startsWith("•") || l.trim().startsWith("-") ? l.trim() : "• " + l.trim()).join("\n");
-  }
+let groundingIndex = rawText.search(/(5\.\s*)?Primary Legal Grounding/i);
+if (clientIndex !== -1) {
+  let endClient = (groundingIndex !== -1) ? groundingIndex : rawText.length;
+  let sec4 = rawText.substring(clientIndex, endClient).replace(/^(4\.\s*)?(Non-Lawyer\s*)?Client Takeaways\s*/i, '').trim();
+  let lines = sec4.split("\n").filter(l => l.trim().length > 0);
+  clientText = lines.map(l => l.trim().startsWith("•") || l.trim().startsWith("-") ? l.trim() : "• " + l.trim()).join("\n");
 }
 
 if (!clientText) {
   clientText = "• Statutory Boundary: Review specific obligations under relevant HK ordinances.\n• Errors vs Misconduct: Unintentional errors generally do not justify summary termination.\n• Action Item: Maintain clear policy documentation and conduct prior investigations.";
 }
 
-// 5. Extract Section 5 Legal Grounding directly if present
-if (rawText.toLowerCase().includes("primary legal grounding") || rawText.toLowerCase().includes("legal grounding")) {
-  let groundingBlock = rawText.split(/primary legal grounding|legal grounding/i)[1];
-  if (groundingBlock) {
-    extractedAuthority = groundingBlock.replace(/^[:\s\-]+/g, '').trim();
-  }
+// 5. Extract Section 5 Legal Grounding directly
+if (groundingIndex !== -1) {
+  extractedAuthority = rawText.substring(groundingIndex).replace(/^(5\.\s*)?Primary Legal Grounding\s*(& Pinpointing)?\s*/i, '').trim();
 }
 
 // Fallback Dynamic Legal Grounding Extraction
@@ -323,14 +316,13 @@ if (!extractedAuthority) {
   if (rawText.includes("Cap. 486") || rawText.includes("Personal Data")) statutesFound.push("Personal Data (Privacy) Ordinance (Cap. 486) DPP3 & DPP4");
   if (rawText.includes("Cap. 57") || rawText.includes("Employment Ordinance")) statutesFound.push("Employment Ordinance (Cap. 57) Section 9(1)(a)(ii)");
   if (rawText.includes("Cap. 26") || rawText.includes("Sale of Goods")) statutesFound.push("Sale of Goods Ordinance (Cap. 26) Section 12(1)");
-  if (rawText.includes("Cap. 201")) statutesFound.push("Prevention of Bribery Ordinance (Cap. 201) s 9");
 
   let precedentFound = "Relevant HK Judicial Precedents & PCPD Rulings";
   if (rawText.includes("Tsang Tak Chi")) precedentFound = "TSANG TAK CHI v CHINA WALL LTD [1999] 1 HKC 366";
   if (rawText.includes("CHAN YIM WAH")) precedentFound = "CHAN YIM WAH WALLACE v NEW WORLD FIRST FERRY SERVICES LTD [2015] 3 HKC 382";
   if (rawText.includes("Y v LAW SOCIETY")) precedentFound = "Y v LAW SOCIETY OF HONG KONG [2017] HKCU 1059";
 
-  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0] || "Personal Data (Privacy) Ordinance (Cap. 486)"}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - ${statutesFound.slice(1).join("\n - ") || "Employment Ordinance (Cap. 57) s. 9 Summary Dismissal Framework"}`;
+  extractedAuthority = `Primary Statutory Anchor: ${statutesFound[0] || "Personal Data (Privacy) Ordinance (Cap. 486)"}\nLeading Precedent Ratio: ${precedentFound}\nCross-Domain Anchors Verified:\n - Employment Ordinance (Cap. 57) s. 9 Summary Dismissal Framework`;
 }
 
 // Save to custom state for UI rendering and PowerPoint export
