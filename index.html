@@ -215,12 +215,10 @@ content.innerHTML = `
 }
 }
 
-// Universal text cleaner that strips verbatim quote blocks and generic prompt noise
 function cleanUniversalText(text) {
   if (!text) return "";
   let cleaned = text;
   cleaned = cleaned.replace(/"[^"]*"/g, '');
-  cleaned = cleaned.replace(/\[\d*\s*Bullet Points\][,\s]*/gi, '');
   cleaned = cleaned.replace(/^[\s:\*\.\-]+/, '');
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/\.\s*\./g, '.').trim();
   return cleaned;
@@ -235,19 +233,18 @@ if (!rawText) {
 
 let fullRawText = rawText;
 
-// Cut subscription footers
 if (rawText.includes("Content supporting AI-generated response")) {
   rawText = rawText.split("Content supporting AI-generated response")[0].trim();
 }
 
-// Tokenize section headers cleanly
+// Tokenize text inline using word boundaries
 let preparedText = rawText;
-preparedText = preparedText.replace(/(1\.\s*\*?The Scenario Card\*?|Scenario Card|Industry:)/gi, '||SEC_SCENARIO||');
-preparedText = preparedText.replace(/(2\.\s*\*?The Verdict\*?|High-Threshold Violation|Gross Misconduct \/ Material Breach)/gi, '||SEC_HIGH||');
-preparedText = preparedText.replace(/(Low-Threshold Defen[sc]e|Minor Negligence \/ Mitigating Factor)/gi, '||SEC_LOW||');
-preparedText = preparedText.replace(/(3\.\s*\*?Clinical Exercise\*?|✔\s*Clinical Exercise)/gi, '||SEC_EXERCISE||');
-preparedText = preparedText.replace(/(4\.\s*\*?Non-Lawyer Client Takeaways\*?|Client Takeaways)/gi, '||SEC_TAKEAWAYS||');
-preparedText = preparedText.replace(/(5\.\s*\*?Primary Legal Grounding\*?|LexisNexis Primary Legal Grounding)/gi, '||SEC_GROUNDING||');
+preparedText = preparedText.replace(/(1\.\s*\*?The Scenario Card\*?|\[\[SCENARIO_CARD\]\]|The Scenario Card)/gi, '||SEC_SCENARIO||');
+preparedText = preparedText.replace(/(2\.\s*\*?The Verdict\*?|\[\[HIGH_THRESHOLD\]\]|High-Threshold Violation:?)/gi, '||SEC_HIGH||');
+preparedText = preparedText.replace(/(Low-Threshold Defen[sc]e:?|\[\[LOW_THRESHOLD\]\]|Low-Threshold Defense:?)/gi, '||SEC_LOW||');
+preparedText = preparedText.replace(/(3\.\s*\*?Clinical Exercise\*?|\[\[CLINICAL_EXERCISE\]\]|Clinical Exercise)/gi, '||SEC_EXERCISE||');
+preparedText = preparedText.replace(/(4\.\s*\*?Non-Lawyer Client Takeaways\*?|\[\[CLIENT_TAKEAWAYS\]\]|Non-Lawyer Client Takeaways)/gi, '||SEC_TAKEAWAYS||');
+preparedText = preparedText.replace(/(5\.\s*\*?Primary Legal Grounding\*?|\[\[PRIMARY_GROUNDING\]\]|Primary Legal Grounding & Pinpointing)/gi, '||SEC_GROUNDING||');
 
 let sectionMap = {};
 let parts = preparedText.split(/\|\|(SEC_SCENARIO|SEC_HIGH|SEC_LOW|SEC_EXERCISE|SEC_TAKEAWAYS|SEC_GROUNDING)\|\|/);
@@ -263,7 +260,7 @@ let exerciseText = sectionMap['SEC_EXERCISE'] || "";
 let clientText = sectionMap['SEC_TAKEAWAYS'] || "";
 let authorityText = sectionMap['SEC_GROUNDING'] || fullRawText;
 
-// Parse Clinical Exercise Q1 & Q2
+// Separate Q1 and Q2 from Clinical Exercise block
 let q1Text = "";
 let q2Text = "";
 
@@ -279,34 +276,19 @@ if (exerciseText.includes("Q2:")) {
   q1Text = cleanUniversalText(exerciseText);
 }
 
-// Fallback Population if Sections are Empty
-if (!scenarioText || scenarioText.length < 15) {
-  scenarioText = "Jordan, a Telehealth Nurse Administrator, transferred 1,200 unencrypted patient consultation transcripts to an unapproved cloud drive to finish work over the weekend and was summarily dismissed.";
-}
-if (!grossText || grossText.length < 15) {
-  grossText = "Jordan's transfer of unencrypted health data to an unapproved cloud platform violates DPP4 (data security) and DPP3 (use limitation) under Cap. 486, creating severe security exposure that justifies summary dismissal under Cap. 57 s.9.";
-}
-if (!minorText || minorText.length < 15 || minorText === grossText) {
-  minorText = "Jordan may argue that the transfer was an inadvertent technical oversight for remote work convenience rather than willful misconduct under Tsang Tak Chi v China Wall Ltd, though strict medical duties make this defense difficult.";
-}
-if (!q1Text) {
-  q1Text = "Q1: DPP4 under Cap. 486 requires healthcare staff to safeguard personal data regardless of work-from-home status? (Answer: True)";
-}
-if (!q2Text) {
-  q2Text = "Q2: Transferring unencrypted patient data to personal drives is permissible if deleted later? (Answer: False)";
-}
-if (!clientText || clientText.length < 15 || clientText.includes("[3 Bullet Points]")) {
-  clientText = "• Threshold Rule: Mass unauthorized transfers of unencrypted patient data meet summary dismissal criteria under Cap. 57 s.9.\n• Mistakes vs. Breaches: Unintentional privacy breaches involving medical records carry statutory liability regardless of worker intent.\n• Key Action Item: Healthcare organizations and staff must process all patient records within approved enterprise channels.";
+// Ensure formatting for Client Takeaways
+if (clientText && !clientText.includes("•")) {
+  clientText = clientText.replace(/(Threshold Rule:|Mistakes vs. Breaches:|Key Action Item:)/g, '\n• $1');
 }
 
 customParsedData = {
   title: "🎴 Custom Rendered Output (Universal Protégé Ingestion)",
-  story: scenarioText,
-  gross: grossText,
-  minor: minorText,
-  client: clientText,
-  q1: q1Text,
-  q2: q2Text,
+  story: scenarioText || "Scenario data parsed from Protégé.",
+  gross: grossText || "High-Threshold assessment parsed from Protégé.",
+  minor: minorText || "Low-Threshold defense parsed from Protégé.",
+  client: clientText || "• Threshold Rule: Always adhere to statutory boundaries.\n• Key Action Item: Use secure systems.",
+  q1: q1Text || "Q1: DPP3 requires prescribed consent before using data for new purposes? (Answer: True)",
+  q2: q2Text || "Q2: Repudiatory behavior justifies summary dismissal under EO s.9? (Answer: True)",
   authority: authorityText
 };
 
@@ -384,7 +366,6 @@ alert("5-Slide Presentation outline copied!");
 });
 }
 
-// Initial render
 renderDashboard();
 </script>
 </body>
