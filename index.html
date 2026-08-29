@@ -107,7 +107,7 @@ This dashboard is an educational research tool powered by LexisNexis Protégé a
 
 <!-- Footer with Product Link & Author Credits -->
 <div class="footer">
-🔍 Explore <b><a href="https://www.lexisnexis.com/" target="_blank">LexisNexis Protégé</a></b> for enterprise legal research.<br>
+🔍 Explore <b><a href="https://www.lexisnexis.com/en-hk/products-and-services/online-solution/lexis-plus-protege?gad_source=1&gad_campaignid=24133535899&gbraid=0AAAAA-ENcK1zAYkv8jZgpWtyFAuZPfdAD&gclid=Cj0KCQjwhsrUBhDxARIsAN3AQSfa8iyHEPhnRVxxOIGQ_CfP7pbQU4_BJOARwQS8g3f0X-pm95ZTVf8aAhx0EALw_wcB" target="_blank">LexisNexis Protégé</a></b> for enterprise legal research.<br>
 🚀 Developed by <b>Melizza Anievas</b> for the <b>LexisNexis AI Hackathon 2026</b>.<br>
 🔗 Connect with Melizza: <a href="https://github.com/melizzaanievas" target="_blank">GitHub</a> | <a href="https://www.linkedin.com/in/melizza-anievas/" target="_blank">LinkedIn</a>
 </div>
@@ -222,7 +222,7 @@ const data = scenarios[topic] || scenarios.cloud;
 
 const webAppUrl = "https://script.google.com/macros/s/AKfycbwKg-6XCI4U02Vhgu6QYKzbrxZUHnmfJQop_GqGYKo3giV9iUXmxVjCGVPpA6Vd5-vO/exec";
 
-if (webAppUrl === "https://script.google.com/macros/s/AKfycbwKg-6XCI4U02Vhgu6QYKzbrxZUHnmfJQop_GqGYKo3giV9iUXmxVjCGVPpA6Vd5-vO/exec") {
+if (!webAppUrl || webAppUrl === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") {
 alert("Please replace 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE' in index.html with your actual Google Apps Script Web App URL!");
 return;
 }
@@ -237,6 +237,7 @@ client: data.client
 
 alert("Generating your editable Google Slides presentation... Please wait a few seconds!");
 window.open(`${webAppUrl}?${params.toString()}`, "_blank");
+}
 }
 
 function parseProtegeInput() {
